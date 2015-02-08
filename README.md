@@ -15,7 +15,7 @@ A collection of crypting functions from the community
 - [ ] SHA-512
 - [ ] Whirlpool
 - [ ] AES
-- [ ] Base64
+- [x] Base64
 - [ ] ASCII85
 
 ###A special thanks to  
