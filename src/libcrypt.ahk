@@ -2,3 +2,5 @@
 LC_Version := "0.0.0.0"
 
 #Include Base64.ahk
+
+#Include BinStr.ahk
