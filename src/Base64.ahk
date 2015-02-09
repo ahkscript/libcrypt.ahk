@@ -1,13 +1,13 @@
 LC_Base64_EncodeText(Text)
 {
 	VarSetCapacity(Bin, StrPut(Text, "UTF-8"))
-	Base64_Encode(Base64, Bin, StrPut(Text, &Bin, "UTF-8")-1)
+	LC_Base64_Encode(Base64, Bin, StrPut(Text, &Bin, "UTF-8")-1)
 	return Base64
 }
 
 LC_Base64_DecodeText(Text)
 {
-	Len := Base64_Decode(Bin, Text)
+	Len := LC_Base64_Decode(Bin, Text)
 	return StrGet(&Bin, "UTF-8")
 }
 
