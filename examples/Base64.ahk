@@ -1,4 +1,4 @@
-#Include ..\lib\Base64.ahk
+#Include ..\build\libcrypt.ahk
 
 FileSelectFile, FilePath,, %A_MyDocuments%\..\Pictures, %A_ScriptName% - Pick a (small) PNG, Images (*.png)
 if !ErrorLevel
