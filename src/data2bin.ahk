@@ -1,13 +1,13 @@
 ﻿data2bin(s,pretty:=0) {
 	r:=""
-	Loop, % l := StrLen(s)
+	Loop, % l:=StrLen(s)
 	{
-		z:=Asc(SubStr(s,A_Index,1)), y:="", p:=1
+		z:=Asc(SubStr(s,A_Index,1)),y:="",p:=1
 		Loop, 8
-			b := z & p,	b := (b)?1:0, y := b . y, p := p << 1
-		r .= y
-		if ( pretty && (A_Index < l) )
-			r .= " "
+			b:=!!(z&p),y:=b y,p:=p<<1
+		r.=y
+		if (pretty && (A_Index<l))
+			r.=" "
 	}
 	return r
 }
