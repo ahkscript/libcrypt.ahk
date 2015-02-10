@@ -17,6 +17,7 @@ A collection of crypting functions from the community
 - [ ] AES
 - [x] Base64
 - [ ] ASCII85
+- [x] Bin / Hex
 
 ###A special thanks to  
 Bentschi, SKAN, just me, atnbueno, IsNull, jNizM, fincs, Laszlo
