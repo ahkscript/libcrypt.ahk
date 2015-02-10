@@ -1,4 +1,4 @@
-﻿data2bin(s,pretty:=0) {
+﻿LC_data2bin(s,pretty:=0) {
 	r:=""
 	Loop, % l:=StrLen(s)
 	{
@@ -11,6 +11,3 @@
 	}
 	return r
 }
-
-MsgBox % data2bin("joedf",true)
-; should be : 01101010 01101111 01100101 01100100 01100110
