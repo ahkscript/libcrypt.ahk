@@ -1,3 +1,4 @@
+;nnnik's custom encryption algorithm
 ;Version 2.1 of the encryption/decryption functions
 
 LC_nnnik21_encryptStr(str="",pass="")
