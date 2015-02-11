@@ -19,7 +19,7 @@ A collection of crypting and encoding functions from the community
 - [ ] Whirlpool
 - [ ] AES
 - [x] Base64
-- [ ] ASCII85
+- [x] ASCII85
 - [x] Bin / Hex
 - [x] Dec / Hex
 - [x] ASCII->BinStr
@@ -27,4 +27,4 @@ A collection of crypting and encoding functions from the community
 - [x] XOR
 
 ###A special thanks to  
-Bentschi, just me, IsNull, jNizM, GeekDude, joedf and Others
+Bentschi, just me, IsNull, jNizM, GeekDude, joedf and others
