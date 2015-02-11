@@ -1,4 +1,4 @@
-LC_XOR_EncryptStr(str,key) {
+LC_XOR_Encrypt(str,key) {
 
 	EncLen:=StrPut(Str,"UTF-16")*2
 	VarSetCapacity(EncData,EncLen)
@@ -13,7 +13,7 @@ LC_XOR_EncryptStr(str,key) {
 	return OutBase64
 }
 
-LC_XOR_DecryptStr(OutBase64,key) {
+LC_XOR_Decrypt(OutBase64,key) {
         EncLen:=LC_Base64_Decode(OutData, OutBase64)
       
         PassLen:=StrPut(key,"UTF-8")
