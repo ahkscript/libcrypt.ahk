@@ -19,6 +19,7 @@ A collection of crypting functions from the community
 - [ ] ASCII85
 - [x] Bin / Hex
 - [x] ASCII->BinStr
+- [x] Div2
 
 ###A special thanks to  
 Bentschi, SKAN, just me, atnbueno, IsNull, jNizM, fincs, Laszlo
