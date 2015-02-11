@@ -24,7 +24,8 @@ A collection of crypting and encoding functions from the community
 - [x] Dec (2 to 36)
 - [x] ASCII->BinStr
 - [x] Div2
+- [x] nnnik21
 - [x] XOR
 
 ###A special thanks to  
-Bentschi, just me, IsNull, jNizM, GeekDude, joedf and others
+Bentschi, just me, IsNull, jNizM, GeekDude, joedf, nnnik and others
