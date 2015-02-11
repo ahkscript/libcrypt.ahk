@@ -1,4 +1,4 @@
-﻿LC_data2bin(s,pretty:=0) {
+﻿LC_ASCII2BinStr(s,pretty:=0) {
 	r:=""
 	Loop, % l:=StrLen(s)
 	{

@@ -1,5 +1,19 @@
 LC_Version := "0.0.1.0"
 
+LC_ASCII2BinStr(s,pretty:=0) {
+	r:=""
+	Loop, % l:=StrLen(s)
+	{
+		z:=Asc(SubStr(s,A_Index,1)),y:="",p:=1
+		Loop, 8
+			b:=!!(z&p),y:=b y,p:=p<<1
+		r.=y
+		if (pretty && (A_Index<l))
+			r.=" "
+	}
+	return r
+}
+
 LC_Base64_EncodeText(Text)
 {
 	VarSetCapacity(Bin, StrPut(Text, "UTF-8"))
@@ -51,18 +65,4 @@ LC_Str2Bin(ByRef Out, ByRef In, Flags)
 	DllCall("Crypt32.dll\CryptStringToBinary", "Ptr", &In, "UInt", StrLen(In)
 	, "UInt", Flags, "Str", Out, "UInt*", OutLen, "Ptr", 0, "Ptr", 0)
 	return OutLen
-}
-
-LC_data2bin(s,pretty:=0) {
-	r:=""
-	Loop, % l:=StrLen(s)
-	{
-		z:=Asc(SubStr(s,A_Index,1)),y:="",p:=1
-		Loop, 8
-			b:=!!(z&p),y:=b y,p:=p<<1
-		r.=y
-		if (pretty && (A_Index<l))
-			r.=" "
-	}
-	return r
 }
