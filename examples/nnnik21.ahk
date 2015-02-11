@@ -2,8 +2,8 @@
 
 Message 	:= "Secret Message!"
 Password 	:= "Password"
-Encoded 	:= LC_nnnik21_Encrypt(Message,Password)
-Decoded 	:= LC_nnnik21_Decrypt(Encoded,Password)
+Encoded 	:= LC_nnnik21_EncryptStr(Message,Password)
+Decoded 	:= LC_nnnik21_DecryptStr(Encoded,Password)
 
 MsgBox,
 (
