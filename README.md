@@ -21,7 +21,7 @@ A collection of crypting and encoding functions from the community
 - [x] Base64
 - [x] ASCII85
 - [x] Bin / Hex
-- [x] Dec / Hex
+- [x] Dec (2 to 36)
 - [x] ASCII->BinStr
 - [x] Div2
 - [x] XOR

@@ -242,6 +242,35 @@ LC_FileCRC32(sFile := "", cSz := 4) {
 	return CRC32, DllCall("Kernel32.dll\FreeLibrary", "Ptr", hMod)
 }
 
+LC_To_Dec(from, n) {
+	h := SubStr("0123456789ABCDEF", 1, from)
+	d := 0
+	loop % StrLen(n)
+	{
+		d *= from
+		StringGetPos, p, h, % SubStr(n, A_Index, 1)
+		if (p = -1)
+			return p
+		d += p
+	}
+	return d
+}
+LC_Dec2Hex(x) {
+	return LC_From_Dec(16,x)
+}
+LC_Hex2Dec(x) {
+	return LC_To_Dec(16,x)
+}
+;from Laszlo : http://www.autohotkey.com/board/topic/15951-base-10-to-base-36-conversion/#entry103624
+LC_From_Dec(b,n) { ; 1 < b <= 36, n >= 0
+	Loop {
+		d := mod(n,b), n //= b
+		m := (d < 10 ? d : Chr(d+55)) . m
+		IfLess n,1, Break
+	}
+	Return m
+}
+
 ;
 ; Date Updated:
 ;	Friday, November 23rd, 2012 - Tuesday, February 10th, 2015
@@ -313,27 +342,6 @@ LC_Div2_decode(input, AutoTrimIsOn:=0, numproc:=1) {
 	return final
 }
 
-
-LC_Dec2Hex(x){
-	A_FormatInteger_bkp:=A_FormatInteger
-	SetFormat,IntegerFast,hex
-	x+=0
-	x.=""
-	SetFormat,IntegerFast,%A_FormatInteger_bkp%
-	StringTrimLeft,x,x,2 
-	StringUpper,x,x
-	return x
-}
-LC_Hex2Dec(x){
-	A_FormatInteger_bkp:=A_FormatInteger
-	if !InStr(x,"x")
-		x:="0x" x
-	SetFormat,IntegerFast,Dec
-	x+=0
-	x.=""
-	SetFormat,IntegerFast,%A_FormatInteger_bkp%
-	return x
-}
 
 LC_HMAC(Key, Message, Algo := "MD5") {
 	static Algorithms := {MD2:    {ID: 0x8001, Size:  64}
