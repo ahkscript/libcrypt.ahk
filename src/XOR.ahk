@@ -1,13 +1,32 @@
-﻿LC_XOR_Encrypt(str,key,delim:=":") {
-	r:="", k:=StrSplit(key), m:=Strlen(key), k[0]:=k[m]
-	for i, c in StrSplit(str)
-		r .= LC_Dec2Hex(Asc(c)^Asc(k[mod(i,m)])) delim
-	return SubStr(r,1,-1)
+LC_XOR_EncryptStr(str,key) {
+
+	EncLen:=StrPut(Str,"UTF-16")*2
+	VarSetCapacity(EncData,EncLen)
+	StrPut(Str,&EncData,"UTF-16")
+	
+	PassLen:=StrPut(key,"UTF-8")
+	VarSetCapacity(PassData,PassLen)
+	StrPut(key,&PassData,"UTF-8")
+	
+	LC_XOR(OutData,EncData,EncLen,PassData,PassLen)
+	LC_Base64_Encode(OutBase64, OutData, EncLen)
+	return OutBase64
 }
 
-LC_XOR_Decrypt(str,key,delim:=":") {
-	r:="", k:=StrSplit(key), m:=Strlen(key), k[0]:=k[m]
-	for i, n in StrSplit(str,delim)
-		r .= Chr(LC_Hex2Dec(n)^Asc(k[mod(i,m)]))
-	return r
+LC_XOR_DecryptStr(OutBase64,key) {
+        EncLen:=LC_Base64_Decode(OutData, OutBase64)
+      
+        PassLen:=StrPut(key,"UTF-8")
+	VarSetCapacity(PassData,PassLen)
+	StrPut(key,&PassData,"UTF-8")
+	
+	LC_XOR(EncData,OutData,EncLen,PassData,PassLen)
+	return StrGet(EncData,"UTF-16")
+}
+
+LC_XOR(byref OutData,byref EncData,EncLen,byref PassData,PassLen)
+{
+	VarSetCapacity(OutData,EncLen)
+	Loop % EncLen
+		NumPut(NumGet(EncData,A_Index-1,"UChar")^NumGet(PassData,Mod(A_Index-1,PassLen),"UChar"),OutData,A_Index-1,"UChar")
 }
