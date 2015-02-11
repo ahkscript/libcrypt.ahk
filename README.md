@@ -1,7 +1,7 @@
 libcrypt.ahk
 ============
 
-A collection of crypting functions from the community
+A collection of crypting and encoding functions from the community
 
 ###Functions (WIP)  
 - [x] CRC32
