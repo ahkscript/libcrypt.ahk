@@ -21,7 +21,7 @@ LC_XOR_Decrypt(OutBase64,key) {
 	StrPut(key,&PassData,"UTF-8")
 	
 	LC_XOR(EncData,OutData,EncLen,PassData,PassLen)
-	return StrGet(EncData,"UTF-16")
+	return StrGet(&EncData,"UTF-16")
 }
 
 LC_XOR(byref OutData,byref EncData,EncLen,byref PassData,PassLen)
