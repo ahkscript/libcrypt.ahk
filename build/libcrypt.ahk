@@ -67,6 +67,134 @@ LC_Str2Bin(ByRef Out, ByRef In, Flags)
 	return OutLen
 }
 
+LC_CalcAddrHash(addr, length, algid, byref hash = 0, byref hashlength = 0) {
+	static h := [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "a", "b", "c", "d", "e", "f"]
+	static b := h.minIndex()
+	hProv := hHash := o := ""
+	if (DllCall("advapi32\CryptAcquireContext", "Ptr*", hProv, "Ptr", 0, "Ptr", 0, "UInt", 24, "UInt", 0xf0000000))
+	{
+		if (DllCall("advapi32\CryptCreateHash", "Ptr", hProv, "UInt", algid, "UInt", 0, "UInt", 0, "Ptr*", hHash))
+		{
+			if (DllCall("advapi32\CryptHashData", "Ptr", hHash, "Ptr", addr, "UInt", length, "UInt", 0))
+			{
+				if (DllCall("advapi32\CryptGetHashParam", "Ptr", hHash, "UInt", 2, "Ptr", 0, "UInt*", hashlength, "UInt", 0))
+				{
+					VarSetCapacity(hash, hashlength, 0)
+					if (DllCall("advapi32\CryptGetHashParam", "Ptr", hHash, "UInt", 2, "Ptr", &hash, "UInt*", hashlength, "UInt", 0))
+					{
+						loop % hashlength
+						{
+							v := NumGet(hash, A_Index - 1, "UChar")
+							o .= h[(v >> 4) + b] h[(v & 0xf) + b]
+						}
+					}
+				}
+			}
+			DllCall("advapi32\CryptDestroyHash", "Ptr", hHash)
+		}
+		DllCall("advapi32\CryptReleaseContext", "Ptr", hProv, "UInt", 0)
+	}
+	return o
+}
+LC_CalcStringHash(string, algid, encoding = "UTF-8", byref hash = 0, byref hashlength = 0) {
+	chrlength := (encoding = "CP1200" || encoding = "UTF-16") ? 2 : 1
+	length := (StrPut(string, encoding) - 1) * chrlength
+	VarSetCapacity(data, length, 0)
+	StrPut(string, &data, floor(length / chrlength), encoding)
+	return LC_CalcAddrHash(&data, length, algid, hash, hashlength)
+}
+LC_CalcHexHash(hexstring, algid) {
+	length := StrLen(hexstring) // 2
+	VarSetCapacity(data, length, 0)
+	loop % length
+	{
+		NumPut("0x" SubStr(hexstring, 2 * A_Index - 1, 2), data, A_Index - 1, "Char")
+	}
+	return LC_CalcAddrHash(&data, length, algid)
+}
+LC_CalcFileHash(filename, algid, continue = 0, byref hash = 0, byref hashlength = 0) {
+	fpos := ""
+	if (!(f := FileOpen(filename, "r")))
+	{
+		return
+	}
+	f.pos := 0
+	if (!continue && f.length > 0x7fffffff)
+	{
+		return
+	}
+	if (!continue)
+	{
+		VarSetCapacity(data, f.length, 0)
+		f.rawRead(&data, f.length)
+		f.pos := oldpos
+		return LC_CalcAddrHash(&data, f.length, algid, hash, hashlength)
+	}
+	hashlength := 0
+	while (f.pos < f.length)
+	{
+		readlength := (f.length - fpos > continue) ? continue : f.length - f.pos
+		VarSetCapacity(data, hashlength + readlength, 0)
+		DllCall("RtlMoveMemory", "Ptr", &data, "Ptr", &hash, "Ptr", hashlength)
+		f.rawRead(&data + hashlength, readlength)
+		h := LC_CalcAddrHash(&data, hashlength + readlength, algid, hash, hashlength)
+	}
+	return h
+}
+
+LC_CRC32(string, encoding = "UTF-8") {
+	chrlength := (encoding = "CP1200" || encoding = "UTF-16") ? 2 : 1
+	length := (StrPut(string, encoding) - 1) * chrlength
+	VarSetCapacity(data, length, 0)
+	StrPut(string, &data, floor(length / chrlength), encoding)
+	hMod := DllCall("Kernel32.dll\LoadLibrary", "Str", "Ntdll.dll")
+	SetFormat, Integer, % SubStr((A_FI := A_FormatInteger) "H", 0)
+	CRC32 := DllCall("Ntdll.dll\RtlComputeCrc32", "UInt", 0, "UInt", &data, "UInt", length, "UInt")
+	CRC := SubStr(CRC32 | 0x1000000000, -7)
+	DllCall("User32.dll\CharLower", "Str", CRC)
+	SetFormat, Integer, %A_FI%
+	return CRC, DllCall("Kernel32.dll\FreeLibrary", "Ptr", hMod)
+}
+LC_HexCRC32(hexstring) {
+	length := StrLen(hexstring) // 2
+	VarSetCapacity(data, length, 0)
+	loop % length
+	{
+		NumPut("0x" SubStr(hexstring, 2 * A_Index -1, 2), data, A_Index - 1, "Char")
+	}
+	hMod := DllCall("Kernel32.dll\LoadLibrary", "Str", "Ntdll.dll")
+	SetFormat, Integer, % SubStr((A_FI := A_FormatInteger) "H", 0)
+	CRC32 := DllCall("Ntdll.dll\RtlComputeCrc32", "UInt", 0, "UInt", &data, "UInt", length, "UInt")
+	CRC := SubStr(CRC32 | 0x1000000000, -7)
+	DllCall("User32.dll\CharLower", "Str", CRC)
+	SetFormat, Integer, %A_FI%
+	return CRC, DllCall("Kernel32.dll\FreeLibrary", "Ptr", hMod)
+}
+LC_FileCRC32(sFile := "", cSz := 4) {
+	Bytes := ""
+	cSz := (cSz < 0 || cSz > 8) ? 2**22 : 2**(18 + cSz)
+	VarSetCapacity(Buffer, cSz, 0)
+	hFil := DllCall("Kernel32.dll\CreateFile", "Str", sFile, "UInt", 0x80000000, "UInt", 3, "Int", 0, "UInt", 3, "UInt", 0, "Int", 0, "UInt")
+	if (hFil < 1)
+	{
+		return hFil
+	}
+	hMod := DllCall("Kernel32.dll\LoadLibrary", "Str", "Ntdll.dll")
+	CRC32 := 0
+	DllCall("Kernel32.dll\GetFileSizeEx", "UInt", hFil, "Int64", &Buffer), fSz := NumGet(Buffer, 0, "Int64")
+	loop % (fSz // cSz + !!Mod(fSz, cSz))
+	{
+		DllCall("Kernel32.dll\ReadFile", "UInt", hFil, "Ptr", &Buffer, "UInt", cSz, "UInt*", Bytes, "UInt", 0)
+		CRC32 := DllCall("Ntdll.dll\RtlComputeCrc32", "UInt", CRC32, "UInt", &Buffer, "UInt", Bytes, "UInt")
+	}
+	DllCall("Kernel32.dll\CloseHandle", "Ptr", hFil)
+	SetFormat, Integer, % SubStr((A_FI := A_FormatInteger) "H", 0)
+	CRC32 := SubStr(CRC32 + 0x1000000000, -7)
+	DllCall("User32.dll\CharLower", "Str", CRC32)
+	SetFormat, Integer, %A_FI%
+	return CRC32, DllCall("Kernel32.dll\FreeLibrary", "Ptr", hMod)
+}
+
 ;
 ; Date Updated:
 ;	Friday, November 23rd, 2012 - Tuesday, February 10th, 2015
@@ -158,6 +286,174 @@ LC_Hex2Dec(x){
 	x.=""
 	SetFormat,IntegerFast,%A_FormatInteger_bkp%
 	return x
+}
+
+LC_HMAC(Key, Message, Algo := "MD5") {
+	static Algorithms := {MD2:    {ID: 0x8001, Size:  64}
+						, MD4:    {ID: 0x8002, Size:  64}
+						, MD5:    {ID: 0x8003, Size:  64}
+						, SHA:    {ID: 0x8004, Size:  64}
+						, SHA256: {ID: 0x800C, Size:  64}
+						, SHA384: {ID: 0x800D, Size: 128}
+						, SHA512: {ID: 0x800E, Size: 128}}
+	static iconst := 0x36
+	static oconst := 0x5C
+	if (!(Algorithms.HasKey(Algo)))
+	{
+		return ""
+    }
+	Hash := KeyHashLen := InnerHashLen := ""
+	HashLen := 0
+	AlgID := Algorithms[Algo].ID
+	BlockSize := Algorithms[Algo].Size
+	MsgLen := StrPut(Message, "UTF-8") - 1
+	KeyLen := StrPut(Key, "UTF-8") - 1
+	VarSetCapacity(K, KeyLen + 1, 0)
+	StrPut(Key, &K, KeyLen, "UTF-8")
+	if (KeyLen > BlockSize)
+    {
+		LC_CalcAddrHash(&K, KeyLen, AlgID, KeyHash, KeyHashLen)
+	}
+
+	VarSetCapacity(ipad, BlockSize + MsgLen, iconst)
+	Addr := KeyLen > BlockSize ? &KeyHash : &K
+	Length := KeyLen > BlockSize ? KeyHashLen : KeyLen
+	i := 0
+	while (i < Length)
+	{
+		NumPut(NumGet(Addr + 0, i, "UChar") ^ iconst, ipad, i, "UChar")
+		i++
+	}
+	if (MsgLen)
+	{
+		StrPut(Message, &ipad + BlockSize, MsgLen, "UTF-8")
+	}
+	LC_CalcAddrHash(&ipad, BlockSize + MsgLen, AlgID, InnerHash, InnerHashLen)
+
+	VarSetCapacity(opad, BlockSize + InnerHashLen, oconst)
+	Addr := KeyLen > BlockSize ? &KeyHash : &K
+	Length := KeyLen > BlockSize ? KeyHashLen : KeyLen
+	i := 0
+	while (i < Length)
+	{
+		NumPut(NumGet(Addr + 0, i, "UChar") ^ oconst, opad, i, "UChar")
+		i++
+	}
+	Addr := &opad + BlockSize
+	i := 0
+	while (i < InnerHashLen)
+	{
+		NumPut(NumGet(InnerHash, i, "UChar"), Addr + i, 0, "UChar")
+		i++
+	}
+	return LC_CalcAddrHash(&opad, BlockSize + InnerHashLen, AlgID)
+}
+
+LC_MD2(string, encoding = "UTF-8") {
+	return LC_CalcStringHash(string, 0x8001, encoding)
+}
+LC_HexMD2(hexstring) {
+	return LC_CalcHexHash(hexstring, 0x8001)
+}
+LC_FileMD2(filename) {
+	return LC_CalcFileHash(filename, 0x8001, 64 * 1024)
+}
+LC_AddrMD2(addr, length) {
+	return LC_CalcAddrHash(addr, length, 0x8001)
+}
+
+LC_MD4(string, encoding = "UTF-8") {
+	return LC_CalcStringHash(string, 0x8002, encoding)
+}
+LC_HexMD4(hexstring) {
+	return LC_CalcHexHash(hexstring, 0x8002)
+}
+LC_FileMD4(filename) {
+	return LC_CalcFileHash(filename, 0x8002, 64 * 1024)
+}
+LC_AddrMD4(addr, length) {
+	return LC_CalcAddrHash(addr, length, 0x8002)
+}
+
+LC_MD5(string, encoding = "UTF-8") {
+	return LC_CalcStringHash(string, 0x8003, encoding)
+}
+LC_HexMD5(hexstring) {
+	return LC_CalcHexHash(hexstring, 0x8003)
+}
+LC_FileMD5(filename) {
+	return LC_CalcFileHash(filename, 0x8003, 64 * 1024)
+}
+LC_AddrMD5(addr, length) {
+	return LC_CalcAddrHash(addr, length, 0x8003)
+}
+
+LC_SecureSalted(salt, message, algo := "md5") {
+	hash := ""
+	saltedHash := %algo%(message . salt) 
+	saltedHashR := %algo%(salt . message)
+	len := StrLen(saltedHash)
+	loop % len / 2
+	{
+		byte1 := "0x" . SubStr(saltedHash, 2 * A_index - 1, 2)
+		byte2 := "0x" . SubStr(saltedHashR, 2 * A_index - 1, 2)
+		SetFormat, integer, hex
+		hash .= StrLen(ns := SubStr(byte1 ^ byte2, 3)) < 2 ? "0" ns : ns
+	}
+	SetFormat, integer, dez
+	return hash
+}
+
+LC_SHA(string, encoding = "UTF-8") {
+	return LC_CalcStringHash(string, 0x8004, encoding)
+}
+LC_HexSHA(hexstring) {
+	return LC_CalcHexHash(hexstring, 0x8004)
+}
+LC_FileSHA(filename) {
+	return LC_CalcFileHash(filename, 0x8004, 64 * 1024)
+}
+LC_AddrSHA(addr, length) {
+	return LC_CalcAddrHash(addr, length, 0x8004)
+}
+
+LC_SHA256(string, encoding = "UTF-8") {
+	return LC_CalcStringHash(string, 0x800c, encoding)
+}
+LC_HexSHA256(hexstring) {
+	return LC_CalcHexHash(hexstring, 0x800c)
+}
+LC_FileSHA256(filename) {
+	return LC_CalcFileHash(filename, 0x800c, 64 * 1024)
+}
+LC_AddrSHA256(addr, length) {
+	return LC_CalcAddrHash(addr, length, 0x800c)
+}
+
+LC_SHA384(string, encoding = "UTF-8") {
+	return LC_CalcStringHash(string, 0x800d, encoding)
+}
+LC_HexSHA384(hexstring) {
+	return LC_CalcHexHash(hexstring, 0x800d)
+}
+LC_FileSHA384(filename) {
+	return LC_CalcFileHash(filename, 0x800d, 64 * 1024)
+}
+LC_AddrSHA384(addr, length) {
+	return LC_CalcAddrHash(addr, length, 0x800d)
+}
+
+LC_SHA512(string, encoding = "UTF-8") {
+	return LC_CalcStringHash(string, 0x800e, encoding)
+}
+LC_HexSHA512(hexstring) {
+	return LC_CalcHexHash(hexstring, 0x800e)
+}
+LC_FileSHA512(filename) {
+	return LC_CalcFileHash(filename, 0x800e, 64 * 1024)
+}
+LC_AddrSHA512(addr, length) {
+	return LC_CalcAddrHash(addr, length, 0x800e)
 }
 
 LC_XOR_Encrypt(str,key,delim:=":") {
