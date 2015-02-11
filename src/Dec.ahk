@@ -1,13 +1,13 @@
-﻿LC_To_Dec(from, n) {
-	h := SubStr("0123456789ABCDEF", 1, from)
-	d := 0
+﻿;from joedf : fork-fusion of jNizM+Laszlo's functions [to_decimal()+ToBase()]
+LC_To_Dec(b, n) { ; 1 < b <= 36, n >= 0
+	d:=0
+	StringUpper,n,n
 	loop % StrLen(n)
 	{
-		d *= from
-		StringGetPos, p, h, % SubStr(n, A_Index, 1)
-		if (p = -1)
-			return p
-		d += p
+		d *= b, k:=SubStr(n,A_Index,1)
+		if k is not Integer
+			k:=Asc(k)-55
+		d += k
 	}
 	return d
 }

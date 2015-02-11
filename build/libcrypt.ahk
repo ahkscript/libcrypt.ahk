@@ -242,24 +242,18 @@ LC_FileCRC32(sFile := "", cSz := 4) {
 	return CRC32, DllCall("Kernel32.dll\FreeLibrary", "Ptr", hMod)
 }
 
-LC_To_Dec(from, n) {
-	h := SubStr("0123456789ABCDEF", 1, from)
-	d := 0
+;from joedf : fork-fusion of jNizM+Laszlo's functions [to_decimal()+ToBase()]
+LC_To_Dec(b, n) { ; 1 < b <= 36, n >= 0
+	d:=0
+	StringUpper,n,n
 	loop % StrLen(n)
 	{
-		d *= from
-		StringGetPos, p, h, % SubStr(n, A_Index, 1)
-		if (p = -1)
-			return p
-		d += p
+		d *= b, k:=SubStr(n,A_Index,1)
+		if k is not Integer
+			k:=Asc(k)-55
+		d += k
 	}
 	return d
-}
-LC_Dec2Hex(x) {
-	return LC_From_Dec(16,x)
-}
-LC_Hex2Dec(x) {
-	return LC_To_Dec(16,x)
 }
 ;from Laszlo : http://www.autohotkey.com/board/topic/15951-base-10-to-base-36-conversion/#entry103624
 LC_From_Dec(b,n) { ; 1 < b <= 36, n >= 0
@@ -269,6 +263,12 @@ LC_From_Dec(b,n) { ; 1 < b <= 36, n >= 0
 		IfLess n,1, Break
 	}
 	Return m
+}
+LC_Dec2Hex(x) {
+	return LC_From_Dec(16,x)
+}
+LC_Hex2Dec(x) {
+	return LC_To_Dec(16,x)
 }
 
 ;
