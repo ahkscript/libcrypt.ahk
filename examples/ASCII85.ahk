@@ -12,7 +12,7 @@ Man is distinguished, not only by his reason, but by this singular passion from 
 , and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.
 )
 
-example := "ASCII85: -----`n" . LC_ASCII85(In)
-	. "`n`nInverse: -----`n" . LC_ASCII85(LC_ASCII85(In), 1)
+example := "ASCII85: -----`n" . (e:=LC_ASCII85_Encode(In))
+	. "`n`nInverse: -----`n" . LC_ASCII85_Decode(e)
 MsgBox, 64, ASCII85, %example%
 ExitApp
