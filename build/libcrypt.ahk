@@ -14,7 +14,8 @@ LC_ASCII2BinStr(s,pretty:=0) {
 	return r
 }
 
- ; thanks to Titan
+ ; by Titan
+ ; with a few modifications
 LC_ASCII85_Encode(str) {
 	x:="",tr:="",i:="", xFI := A_FormatInteger
 	SetFormat, Integer, Hex
