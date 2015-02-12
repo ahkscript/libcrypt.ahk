@@ -26,3 +26,6 @@ LC_Dec2Hex(x) {
 LC_Hex2Dec(x) {
 	return LC_To_Dec(16,x)
 }
+LC_Numvert(num,from,to) { ; from joedf : http://ahkscript.org/boards/viewtopic.php?f=6&t=6363
+    return LC_From_Dec(to,LC_To_Dec(from,num))
+}
