@@ -22,7 +22,7 @@ A collection of crypting and encoding functions from the community
 - [x] Div2
 - [x] nnnik21
 - [x] XOR
-- [x] ROT13, ROT47
+- [x] ROT5, ROT13, ROT18, ROT47
 
 ###A special thanks to  
-Bentschi, just me, IsNull, jNizM, GeekDude, joedf, nnnik and others
+Bentschi, just me, IsNull, @jNizM, @G33kDude, @joedf, @nnnik and others
