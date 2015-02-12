@@ -25,4 +25,4 @@ A collection of crypting and encoding functions from the community
 - [x] ROT5, ROT13, ROT18, ROT47
 
 ###A special thanks to  
-Bentschi, just me, IsNull, @jNizM, @G33kDude, @joedf, @nnnik and others
+Bentschi, @AHK-just-me, @IsNull, @jNizM, @G33kDude, @joedf, @nnnik and others
