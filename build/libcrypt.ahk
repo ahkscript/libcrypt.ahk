@@ -61,17 +61,17 @@ LC_ASCII85(str, inv=0) { ; by Titan
 	Return, "<~" . i . "~>"
 }
 
-LC_Base64_EncodeText(Text)
+LC_Base64_EncodeText(Text,Encoding="UTF-8")
 {
-	VarSetCapacity(Bin, StrPut(Text, "UTF-8"))
-	LC_Base64_Encode(Base64, Bin, StrPut(Text, &Bin, "UTF-8")-1)
+	VarSetCapacity(Bin, StrPut(Text, Encoding))
+	LC_Base64_Encode(Base64, Bin, StrPut(Text, &Bin, Encoding)-1)
 	return Base64
 }
 
-LC_Base64_DecodeText(Text)
+LC_Base64_DecodeText(Text,Encoding="UTF-8")
 {
 	Len := LC_Base64_Decode(Bin, Text)
-	return StrGet(&Bin, "UTF-8")
+	return StrGet(&Bin, Encoding)
 }
 
 LC_Base64_Encode(ByRef Out, ByRef In, InLen)
@@ -83,6 +83,7 @@ LC_Base64_Decode(ByRef Out, ByRef In)
 {
 	return LC_Str2Bin(Out, In, 0x1)
 }
+
 
 LC_Bin2Hex(ByRef Out, ByRef In, InLen, Pretty=False)
 {
@@ -443,6 +444,83 @@ LC_AddrMD5(addr, length) {
 	return LC_CalcAddrHash(addr, length, 0x8003)
 }
 
+;nnnik's custom encryption algorithm
+;Version 2.1 of the encryption/decryption functions
+
+LC_nnnik21_encryptStr(str="",pass="")
+{
+	If !(enclen:=(strput(str,"utf-16")*2))
+		return "Error: Nothing to Encrypt"
+	If !(passlen:=strput(pass,"utf-8")-1)
+		return "Error: No Pass"
+	enclen:=Mod(enclen,4) ? (enclen) : (enclen-2)
+	Varsetcapacity(encbin,enclen,0)
+	StrPut(str,&encbin,enclen/2,"utf-16")
+	Varsetcapacity(passbin,passlen+=mod((4-mod(passlen,4)),4),0)
+	StrPut(pass,&passbin,strlen(pass),"utf-8")
+	LC_nnnik21_encryptbin(&encbin,enclen,&passbin,passlen)
+	LC_Base64_Encode(Text, encbin, enclen)
+	return Text
+}
+
+LC_nnnik21_decryptStr(str="",pass="")
+{
+	If !((strput(str,"utf-16")*2))
+		return "Error: Nothing to Decrypt"
+	If !((passlen:=strput(pass,"utf-8")-1))
+		return "Error: No Pass"
+	Varsetcapacity(passbin,passlen+=mod((4-mod(passlen,4)),4),0)
+	StrPut(pass,&passbin,strlen(pass),"utf-8")
+	enclen:=LC_Base64_Decode(encbin, str)
+	LC_nnnik21__decryptbin(&encbin,enclen,&passbin,passlen)
+	return StrGet(&encbin,"utf-16")
+}
+
+
+LC_nnnik21_encryptbin(pBin1,sBin1,pBin2,sBin2)
+{
+	b:=0
+	Loop % sBin1/4
+	{
+		a:=numget(pBin1+0,sBin1-A_Index*4,"uint")
+		numput(a+b,pBin1+0,sBin1-A_Index*4,"uint")
+		b:=(a+b)*a
+	}
+	Loop % sBin2/4
+	{
+		c:=numget(pBin2+0,(A_Index-1)*4,"uint")
+		b:=0
+		Loop % sBin1/4
+		{
+			a:=numget(pBin1+0,(A_Index-1)*4,"uint")
+			numput((a+b)^c,pBin1+0,(A_Index-1)*4,"uint")
+			b:=(a+b)*a
+		}
+	}
+}
+
+LC_nnnik21__decryptbin(pBin1,sBin1,pBin2,sBin2){
+	Loop % sBin2/4
+	{
+		c:=numget(pBin2+0,sBin2-A_Index*4,"uint")
+		b:=0
+		Loop % sBin1/4
+		{
+			a:=numget(pBin1+0,(A_Index-1)*4,"uint")
+			numput(a:=(a^c)-b,pBin1+0,(A_Index-1)*4,"uint")
+			b:=(a+b)*a
+		}
+	}
+	b:=0
+	Loop % sBin1/4
+	{
+		a:=numget(pBin1+0,sBin1-A_Index*4,"uint")
+		numput(a:=a-b,pBin1+0,sBin1-A_Index*4,"uint")
+		b:=(a+b)*a
+	}
+}
+
+
 LC_SecureSalted(salt, message, algo := "md5") {
 	hash := ""
 	saltedHash := %algo%(message . salt) 
@@ -511,16 +589,34 @@ LC_AddrSHA512(addr, length) {
 	return LC_CalcAddrHash(addr, length, 0x800e)
 }
 
-LC_XOR_Encrypt(str,key,delim:=":") {
-	r:="", k:=StrSplit(key), m:=Strlen(key), k[0]:=k[m]
-	for i, c in StrSplit(str)
-		r .= LC_Dec2Hex(Asc(c)^Asc(k[mod(i,m)])) delim
-	return SubStr(r,1,-1)
+LC_XOR_Encrypt(str,key) {
+	EncLen:=StrPut(Str,"UTF-16")*2
+	VarSetCapacity(EncData,EncLen)
+	StrPut(Str,&EncData,"UTF-16")
+
+	PassLen:=StrPut(key,"UTF-8")
+	VarSetCapacity(PassData,PassLen)
+	StrPut(key,&PassData,"UTF-8")
+
+	LC_XOR(OutData,EncData,EncLen,PassData,PassLen)
+	LC_Base64_Encode(OutBase64, OutData, EncLen)
+	return OutBase64
 }
 
-LC_XOR_Decrypt(str,key,delim:=":") {
-	r:="", k:=StrSplit(key), m:=Strlen(key), k[0]:=k[m]
-	for i, n in StrSplit(str,delim)
-		r .= Chr(LC_Hex2Dec(n)^Asc(k[mod(i,m)]))
-	return r
+LC_XOR_Decrypt(OutBase64,key) {
+	EncLen:=LC_Base64_Decode(OutData, OutBase64)
+
+	PassLen:=StrPut(key,"UTF-8")
+	VarSetCapacity(PassData,PassLen)
+	StrPut(key,&PassData,"UTF-8")
+
+	LC_XOR(EncData,OutData,EncLen,PassData,PassLen)
+	return StrGet(&EncData,"UTF-16")
+}
+
+LC_XOR(byref OutData,byref EncData,EncLen,byref PassData,PassLen)
+{
+	VarSetCapacity(OutData,EncLen)
+	Loop % EncLen
+		NumPut(NumGet(EncData,A_Index-1,"UChar")^NumGet(PassData,Mod(A_Index-1,PassLen),"UChar"),OutData,A_Index-1,"UChar")
 }
