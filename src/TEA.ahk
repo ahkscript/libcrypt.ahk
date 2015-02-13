@@ -4,8 +4,6 @@ Language:  English
 Platform:  Win2000/XP
 Author:    Laszlo Hars <www.Hars.US>
 
-Script to en/decrypt text files to text files
-
 Plus-minus Counter Mode: stream cipher using add/subtract with reduced range
    (32...126). Characters outside remain unchanged (TAB, CR, LF, ...).
    Lines will remain of the same length. If it leaks information, pad!
@@ -20,96 +18,106 @@ key. It seems highly resistant to differential cryptanalysis, and achieves
 complete diffusion (where a one bit difference in the plaintext will cause
 approximately 32 bit differences in the ciphertext) after only six rounds.
 
-As a test, the script reads its source file and saves the ciphertext with
-   extension .enc to the same directory.
-If it exists, the decrypted file is saved with extension .dec instead
-
 Version:   1.0  2005.07.08  First created
+Version:   2.0  2015.02.12  Updated as functions by joedf for Libcrypt
 */
 
-SetBatchLines -1
-StringCaseSense Off
-AutoTrim Off
+LC_TEA_Encrypt(Data)				; Text, key-name
+{
+	static k1 := 0x11111111			; 128-bit secret key
+	static k2 := 0x22222222
+	static k3 := 0x33333333			; choose wisely!
+	static k4 := 0x44444444
 
-k1 := 0x11111111                 ; 128-bit secret key
-k2 := 0x22222222
-k3 := 0x33333333                 ; choose wisely!
-k4 := 0x44444444
-k5 := 0x12345678                 ; starting counter value
+	Local p, i, L, u, v, k5, a, c, IV
+	bkpBL:=A_BatchLines,bkpSCS:=A_StringCaseSense,bkpAT:=A_AutoTrim,bkpFI:=A_FormatInteger
+	SetBatchLines -1
+	StringCaseSense Off
+	AutoTrim Off
 
-StringTrimRight ScriptFile, A_ScriptFullPath, 4
-EncFile = %ScriptFile%.enc       ; EncFile = {script-name}.enc
-DecFile = %ScriptFile%.dec       ; DecFile = {script-name}.dec
+	k5:=SubStr(A_NowUTC,1,8)		; current time
+	v:=SubStr(A_NowUTC,-5)
+	v:=(v*1000)+A_MSec				; in MSec
+	SetFormat,Integer,H
+	TEA(k5,v,k1,k2,k3,k4)			; k5 = IV: starting random counter value
+	SetFormat,Integer,D
+	u:="0000000" . SubStr(k5,3)
+	IV:=SubStr(u,-7)				; 8-digit hex w/o 0x
 
-IfExist %EncFile%
-   GoSub DECRYPT
-Else
-   GoSub ENCRYPT
-ExitApp
+	i := 9							; pad-index, force restart
+	p := 0							; counter to be encrypted
+	L := IV							; IV prepended to processed text
+	Loop % StrLen(Data)
+	{
+		i++
+		IfGreater i,8, {           ; all 9 pad values exhausted
+			u := p
+			v := k5                 ; IV
+			p++                     ; increment counter
+			TEA(u,v,k1,k2,k3,k4)
+			Stream9(u,v)            ; 9 pads from encrypted counter
+			i = 0
+		}
+		StringMid c, Data, A_Index, 1
+		a := Asc(c)
+		if a between 32 and 126
+		{                          ; chars > 126 or < 31 unchanged
+			a += s%i%
+			IfGreater a, 126, SetEnv, a, % a-95
+			c := Chr(a)
+		}
+		L = %L%%c%                 ; attach encrypted character
+	}
+	SetBatchLines,%bkpBL%
+	StringCaseSense,%bkpSCS%
+	AutoTrim,%bkpAT%
+	SetFormat,Integer,%bkpFI%
+	Return L
+}
 
-ENCRYPT:
-   i = 9                         ; pad-index, force restart
-   p = 0                         ; counter to be encrypted
-   Loop Read, %A_ScriptFullPath%, %EncFile%
+
+decrypt(T,key)                   ; Text, key-name
+{
+   Local p, i, L, u, v, k5, a, c
+
+   StringLeft p, T, 8
+   If p is not xdigit            ; if no IV: Error
    {
-      L =                        ; processed line
-      Loop % StrLen(A_LoopReadLine)
-      {
-         i++
-         IfGreater i,8, {        ; all 9 pad values exhausted
-            u := p
-            v := k5              ; another secret
-            p++                  ; increment counter
-            TEA(u,v, k1,k2,k3,k4)
-            Stream9(u,v)         ; 9 pads from encrypted counter
-            i = 0
-         }
-         StringMid c, A_LoopReadLine, A_Index, 1
-         a := Asc(c)
-         if a between 32 and 126
-         {                       ; chars > 126 or < 31 unchanged
-            a += s%i%
-            IfGreater a, 126, SetEnv, a, % a-95
-            c := Chr(a)
-         }
-         L = %L%%c%              ; attach encrypted character
-      }
-      FileAppend %L%`n
+      ErrorLevel = 1
+      Return
    }
-Return
-
-DECRYPT:
-   FileDelete %DecFile%
-   i = 9                         ; pad-index, force restart
+   StringTrimLeft T, T, 8        ; remove IV from text (no separator)
+   k5 = 0x%p%                    ; set new IV
    p = 0                         ; counter to be encrypted
-   Loop Read, %EncFile%, %DecFile%
+   i = 9                         ; pad-index, force restart
+   L =                           ; processed text
+   k0 := %key%0
+   k1 := %key%1
+   k2 := %key%2
+   k3 := %key%3
+   Loop % StrLen(T)
    {
-      L =                        ; processed line
-      Loop % StrLen(A_LoopReadLine)
-      {
-         i++
-         IfGreater i,8, {        ; all 9 pad values exhausted
-            u := p
-            v := k5              ; another secret
-            p++                  ; increment counter
-            TEA(u,v, k1,k2,k3,k4)
-            Stream9(u,v)         ; 9 pads from encrypted counter
-            i = 0
-         }
-         StringMid c, A_LoopReadLine, A_Index, 1
-         a := Asc(c)
-         if a between 32 and 126
-         {                       ; chars > 126 or < 31 unchanged
-            a -= s%i%
-            IfLess a, 32, SetEnv, a, % a+95
-            c := Chr(a)
-         }
-         L = %L%%c%              ; attach encrypted character
+      i++
+      IfGreater i,8, {           ; all 9 pad values exhausted
+         u := p
+         v := k5                 ; IV
+         p++                     ; increment counter
+         TEA(u,v, k0,k1,k2,k3)
+         Stream9(u,v)            ; 9 pads from encrypted counter
+         i = 0
       }
-      FileAppend %L%`n
+      StringMid c, T, A_Index, 1
+      a := Asc(c)
+      if a between 32 and 126
+      {                          ; chars > 126 or < 31 unchanged
+         a -= s%i%
+         IfLess a, 32, SetEnv, a, % a+95
+         c := Chr(a)
+      }
+      L = %L%%c%                 ; attach encrypted character
    }
-Return
-
+   Return L
+ }
 
 TEA(ByRef y,ByRef z,k0,k1,k2,k3)	; (y,z) = 64-bit I/0 block
 {									; (k0,k1,k2,k3) = 128-bit key
