@@ -25,6 +25,7 @@ A collection of crypting and encoding functions from the community
 - [x] ROT5, ROT13, ROT18, ROT47
 - [ ] TEA (xxTEA)
 - [x] RC4
+- [x] URI encode/decode (URL>WIP)
 
 ###A special thanks to  
 Bentschi, @AHK-just-me, @IsNull, @jNizM, @G33kDude, @joedf, @nnnik and others

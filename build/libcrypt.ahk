@@ -686,185 +686,209 @@ LC_AddrSHA512(addr, length) {
 	return LC_CalcAddrHash(addr, length, 0x800e)
 }
 
+LC_TEA_Encrypt(Data,Pass:="") {
+	key:=""
+	Loop, Parse, Pass
+	{
+		k .= Asc(A_LoopField)
+		if (A_Index>=16)
+			break
+	}
+	return LC_TEA(Data,32,Keys)
+}
+LC_TEA_Decrypt(Data,Pass:="") {
+	return LC_TEA(Data,-32,Keys)
+}
+
 /*
-AutoHotkey Version: 1.0.35+
-Language:  English
-Platform:  Win2000/XP
-Author:    Laszlo Hars <www.Hars.US>
+Thanks to Chris Veness for inspiration
+https://github.com/chrisveness/crypto/blob/master/tea-block.js
+*/
+/*
+Tea.encrypt = function(plaintext, password) {
+plaintext = String(plaintext);
+password = String(password);
+if (plaintext.length == 0) return(''); // nothing to encrypt
+// v is n-word data vector; converted to array of longs from UTF-8 string
+var v = Tea.strToLongs(plaintext.utf8Encode());
+// k is 4-word key; simply convert first 16 chars of password as key
+var k = Tea.strToLongs(password.utf8Encode().slice(0,16));
+var n = v.length;
+v = Tea.encode(v, k);
+// convert array of longs to string
+var ciphertext = Tea.longsToStr(v);
+// convert binary string to base64 ascii for safe transport
+return ciphertext.base64Encode();
+};
 
-Plus-minus Counter Mode: stream cipher using add/subtract with reduced range
-   (32...126). Characters outside remain unchanged (TAB, CR, LF, ...).
-   Lines will remain of the same length. If it leaks information, pad!
+Tea.decrypt = function(ciphertext, password) {
+ciphertext = String(ciphertext);
+password = String(password);
+if (ciphertext.length == 0) return('');
+// v is n-word data vector; converted to array of longs from base64 string
+var v = Tea.strToLongs(ciphertext.base64Decode());
+// k is 4-word key; simply convert first 16 chars of password as key
+var k = Tea.strToLongs(password.utf8Encode().slice(0,16));
+var n = v.length;
+v = Tea.decode(v, k);
+var plaintext = Tea.longsToStr(v);
+// strip trailing null chars resulting from filling 4-char blocks:
+plaintext = plaintext.replace(/\0+$/,'');
+return plaintext.utf8Decode();
+};
 
-The underlying cipher is TEA, the Tiny Encryption Algorithm
-http://www.simonshepherd.supanet.com/tea.htm It is one of the fastest and most
-efficient cryptographic algorithms. It was developed by David Wheeler and Roger
-Needham at the Computer Laboratory of Cambridge University. It is a Feistel
-cipher, which uses operations from mixed (orthogonal) algebraic groups - XOR,
-ADD and SHIFT in this case. It encrypts 64 data bits at a time using a 128-bit
-key. It seems highly resistant to differential cryptanalysis, and achieves
-complete diffusion (where a one bit difference in the plaintext will cause
-approximately 32 bit differences in the ciphertext) after only six rounds.
+Tea.strToLongs = function(s) {
+// note chars must be within ISO-8859-1 (Unicode code-point <= U+00FF) to fit 4/long
+var l = new Array(Math.ceil(s.length/4));
+for (var i=0; i<l.length; i++) {
+// note little-endian encoding - endianness is irrelevant as long as it matches longsToStr()
+l[i] = s.charCodeAt(i*4) + (s.charCodeAt(i*4+1)<<8) +
+(s.charCodeAt(i*4+2)<<16) + (s.charCodeAt(i*4+3)<<24);
+}
+return l; // note running off the end of the string generates nulls since bitwise operators
+}; // treat NaN as 0
+;**
+;* Converts array of longs to string.
+;* @private
+;*/
+Tea.longsToStr = function(l) {
+var a = new Array(l.length);
+for (var i=0; i<l.length; i++) {
+a[i] = String.fromCharCode(l[i] & 0xFF, l[i]>>>8 & 0xFF, l[i]>>>16 & 0xFF, l[i]>>>24 & 0xFF);
+}
+return a.join(''); // use Array.join() for better performance than repeated string appends
+};
 
-Version:   1.0  2005.07.08  First created
-Version:   2.0  2015.02.12  Updated as functions by joedf for Libcrypt
+;** Extend String object with method to encode multi-byte string to utf8
+;* - monsur.hossa.in/2012/07/20/utf-8-in-javascript.html
+;*
+if (typeof String.prototype.utf8Encode == 'undefined') {
+String.prototype.utf8Encode = function() {
+return unescape( encodeURIComponent( this ) );
+};
+}
+;** Extend String object with method to decode utf8 string to multi-byte
+if (typeof String.prototype.utf8Decode == 'undefined') {
+String.prototype.utf8Decode = function() {
+try {
+return decodeURIComponent( escape( this ) );
+} catch (e) {
+return this; // invalid UTF-8? return as-is
+}
+};
+}
 */
 
-LC_TEA_Encrypt(Data,Keys:="") {
-	
-	;Default Keys
-	static k1 := 0x11111111			; 128-bit secret key
-	static k2 := 0x22222222
-	static k3 := 0x33333333			; choose wisely!
-	static k4 := 0x44444444
+
+
+
+LC_TEA(d,n,Keys:="") {
+	; Default Keys
+	static k := { 0 : 0xDEADDEAD		; 128-bit secret key
+				, 1 : 0xFEEDFEED
+				, 2 : 0xFADEFADE		; choose wisely!
+				, 3 : 0x4BAD4BAD }
 	
 	Loop 4
 	{
-		if StrLen(k%A_Index%)
-			k%A_Index% := Keys[A_Index]
+		if StrLen(Keys[A_Index])
+			k[A_Index-1] := Keys[A_Index]
 		else
 			break
 	}
 	
-	bkpBL:=A_BatchLines,bkpSCS:=A_StringCaseSense,bkpAT:=A_AutoTrim,bkpFI:=A_FormatInteger
-	SetBatchLines -1
-	StringCaseSense Off
-	AutoTrim Off
+	; Encode block n = +32
+	; Decode block n = -32
+	; 2 block (32 bits) in v[]
+	
+	; Implementation [WIP]
+	
+	return
+}
+/*
+xTEA subroutines adapted from : http://en.wikipedia.org/wiki/XXTEA
 
-	k5:=SubStr(A_NowUTC,1,8)		; current time
-	v:=SubStr(A_NowUTC,-5)
-	v:=(v*1000)+A_MSec				; in MSec
-	SetFormat,Integer,H
-	TEA(k5,v,k1,k2,k3,k4)			; k5 = IV: starting random counter value
-	SetFormat,Integer,D
-	u:="0000000" . SubStr(k5,3)
-	IV:=SubStr(u,-7)				; 8-digit hex w/o 0x
-
-	i := 9							; pad-index, force restart
-	p := 0							; counter to be encrypted
-	L := IV							; IV prepended to processed text
-	Loop % StrLen(Data)
-	{
-		i++
-		if (i>8) {					; all 9 pad values exhausted
-			u := p
-			v := k5					; IV
-			p++						; increment counter
-			TEA(u,v,k1,k2,k3,k4)
-			s := Stream9(u,v)		; 9 pads from encrypted counter
-			i := 0
+Coding and Decoding Routine
+----------------------------------------------------
+    BTEA will encode or decode n words as a single block where n > 1
+		- v is the n word data vector
+		- k is the 4 word key
+		- n is negative for decoding
+		- if n is zero result is 1 and no coding or decoding takes place, otherwise the result is zero
+		- assumes 32 bit 'long' and same endian coding and decoding
+*/
+LC_xxTEA_Block(v,n,k) {
+	z:=v[n-1], y:=v[0], sum:=0, DELTA:=0x9e3779b9
+	if (n > 1) {			; Coding Part
+		q = 6 + (52/n)
+		while (q-- > 0) {
+			sum += DELTA
+			e := (sum >> 2) & 3
+			p:=0
+			while (p<n-1) {
+				y := v[p+1], z := ( v[p] += ((z>>5)^(y<<2)) + (((y>>3)^(z<<4))^(sum^y)) + (k[(p&3)^e]^z) )
+				p++
+			}
+			y := v[0]
+			z := ( v[n-1] += ((z>>5)^(y<<2)) + (((y>>3)^(z<<4))^(sum^y)) + (k[(p&3)^e]^z) )
 		}
-		a:=Asc(c:=SubStr(Data,A_Index,1))
-		if a between 32 and 126
-		{							; chars > 126 or < 31 unchanged
-			a += s[i]
-			IfGreater a, 126, SetEnv, a, % a-95
-			c := Chr(a)
+		return 0
+	} else if (n < -1) {	; Decoding Part
+		n := -n
+		q := 6 + (52/n)
+		sum := q*DELTA
+		while (sum != 0) {
+			e := (sum >> 2) & 3
+			p:=n-1
+			while (p>0) {
+				z := v[p-1], y := ( v[p] -= ((z>>5)^(y<<2)) + (((y>>3)^(z<<4))^(sum^y)) + (k[(p&3)^e]^z) )
+				p--
+			}
+			z := v[n-1]
+			y := ( v[0] -= ((z>>5)^(y<<2)) + (((y>>3)^(z<<4))^(sum^y)) + (k[(p&3)^e]^z) )
+			sum -= DELTA
 		}
-		L .= c						; attach encrypted character
+		return 0
 	}
-	
-	SetBatchLines,%bkpBL%
-	StringCaseSense,%bkpSCS%
-	AutoTrim,%bkpAT%
-	SetFormat,Integer,%bkpFI%
-	
-	Return L
+	return 1
 }
 
-
-LC_TEA_Decrypt(Data,Keys:="") {
-	
-	;Default Keys
-	static k1 := 0x11111111			; 128-bit secret key
-	static k2 := 0x22222222
-	static k3 := 0x33333333			; choose wisely!
-	static k4 := 0x44444444
-	
-	Loop 4
-	{
-		if StrLen(k%A_Index%)
-			k%A_Index% := Keys[A_Index]
-		else
-			break
-	}
-	
-	bkpBL:=A_BatchLines,bkpSCS:=A_StringCaseSense,bkpAT:=A_AutoTrim
-	SetBatchLines -1
-	StringCaseSense Off
-	AutoTrim Off
-
-	p:=SubStr(Data,1,8)
-	If p is not xdigit				; if no IV: Error
-	{
-		ErrorLevel := 1
-		Return
-	}
-	Data:=SubStr(Data,9)			; remove IV from text (no separator)
-	k5 := "0x" p					; set new IV
-	p := 0							; counter to be encrypted
-	i := 9							; pad-index, force restart
-	L := ""							; processed text
-
-	Loop % StrLen(Data)
-	{
-		i++
-		if (i,8) {					; all 9 pad values exhausted
-			u := p
-			v := k5					; IV
-			p++						; increment counter
-			TEA(u,v,k1,k2,k3,k4)
-			s := Stream9(u,v)		; 9 pads from encrypted counter
-			i := 0
-		}
-		a:=Asc(c:=SubStr(Data,A_Index,1))
-		if a between 32 and 126
-		{							; chars > 126 or < 31 unchanged
-			a -= s[i]
-			IfLess a, 32, SetEnv, a, % a+95
-			c := Chr(a)
-		}
-		L .= c						; attach encrypted character
-	}
-	
-	SetBatchLines,%bkpBL%
-	StringCaseSense,%bkpSCS%
-	AutoTrim,%bkpAT%
-	
-	Return L
+; Modified by GeekDude from http://goo.gl/0a0iJq
+LC_UriEncode(Uri)
+{
+	VarSetCapacity(Var, StrPut(Uri, "UTF-8"), 0), StrPut(Uri, &Var, "UTF-8")
+	f := A_FormatInteger
+	SetFormat, IntegerFast, H
+	While Code := NumGet(Var, A_Index - 1, "UChar")
+		If (Code >= 0x30 && Code <= 0x39	; 0-9
+		|| Code >= 0x41 && Code <= 0x5A		; A-Z
+		|| Code >= 0x61 && Code <= 0x7A)	; a-z
+			Res .= Chr(Code)
+	Else
+		Res .= "%" . SubStr(Code + 0x100, -1)
+	SetFormat, IntegerFast, %f%
+	Return, Res
 }
 
-TEA(ByRef y,ByRef z,k0,k1,k2,k3)	; (y,z) = 64-bit I/0 block
-{									; (k0,k1,k2,k3) = 128-bit key
-	IntFormat := A_FormatInteger
-	SetFormat, Integer, D			; needed for decimal indices
-	s := 0
-	d := 0x9E3779B9
-	Loop 32
+LC_UriDecode(Uri)
+{
+	Pos := 1
+	While Pos := RegExMatch(Uri, "i)(%[\da-f]{2})+", Code, Pos)
 	{
-		k := "k" . s & 3			; indexing the key
-		y := 0xFFFFFFFF & (y + ((z << 4 ^ z >> 5) + z  ^  s + %k%))
-		s := 0xFFFFFFFF & (s + d)	; simulate 32 bit operations
-		k := "k" . s >> 11 & 3
-		z := 0xFFFFFFFF & (z + ((y << 4 ^ y >> 5) + y  ^  s + %k%))
+		VarSetCapacity(Var, StrLen(Code) // 3, 0), Code := SubStr(Code,2)
+		Loop, Parse, Code, `%
+			NumPut("0x" A_LoopField, Var, A_Index-1, "UChar")
+		StringReplace, Uri, Uri, `%%Code%, % StrGet(&Var, "UTF-8"), All
 	}
-	SetFormat, Integer, %IntFormat%
-	y += 0
-	z += 0							; Convert to original ineger format
+	Return, Uri
 }
 
-Stream9(x,y)	; Convert 2 32-bit words to 9 pad values
-{				; 0 <= s0, s1, ... s8 <= 94
-	s:=Object()
-	s[0] := Floor(x*0.000000022118911147) ; 95/2**32
-	Loop 8
-	{
-		z := (y << 25) + (x >> 7) & 0xFFFFFFFF
-		y := (x << 25) + (y >> 7) & 0xFFFFFFFF
-		x := z
-		s[A_Index] := Floor(x*0.000000022118911147)
-	}
-	return s
+;---------------------------- to do
+LC_UrlEncode() {
+	;strsplit '/', etc then LC_UriEncode()...
+}
+LC_UrlDecode() {
+	; ...
 }
 
 LC_XOR_Encrypt(str,key) {
