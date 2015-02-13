@@ -22,6 +22,7 @@ LC_TEA(d,n,Keys:="") {
 	
 	; Encode block n = +32
 	; Decode block n = -32
+	; 2 block (32 bits) in v[]
 	
 	; Implementation [WIP]
 	
