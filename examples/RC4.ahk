@@ -8,8 +8,9 @@ Test := LC_RC4(LC_RC4(Message,Password),Password)
 
 MsgBox,
 (
-Message  : `t%Message%
-Password : `t%Password%
-Encrypted  : `t%Encrypted%
-Decrypted  : `t%Decrypted%
+Message   : `t%Message%
+Password  : `t%Password%
+Encrypted : `t%Encrypted%
+Decrypted : `t%Decrypted%
+Test `t: `t%Test%
 )
