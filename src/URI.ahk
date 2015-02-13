@@ -28,10 +28,16 @@ LC_UriDecode(Uri)
 	Return, Uri
 }
 
-;---------------------------- to do
-LC_UrlEncode() {
-	;strsplit '/', etc then LC_UriEncode()...
+;----------------------------------
+LC_UrlEncode(url) {
+	a:=StrLen(url), b:=StrLen(URIs:=RegExReplace(url,"\w+:\/{0,2}[^\/]+.\/")), r:=SubStr(url,1,a-b)
+	for each, uri in StrSplit(URIs,"/")
+		r .= LC_UriEncode(uri) "/"
+	return SubStr(r,1,-1)
 }
-LC_UrlDecode() {
-	; ...
+LC_UrlDecode(url) {
+	a:=StrLen(url), b:=StrLen(URIs:=RegExReplace(url,"\w+:\/{0,2}[^\/]+.\/")), r:=SubStr(url,1,a-b)
+	for each, uri in StrSplit(URIs,"/")
+		r .= LC_UriDecode(uri) "/"
+	return SubStr(r,1,-1)
 }

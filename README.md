@@ -23,7 +23,7 @@ A collection of crypting and encoding functions from the community
 - [x] SHA-256, SHA-384, SHA-512
 - [ ] TEA (xxTEA)
 - [ ] Tiger
-- [x] URI encode/decode (URL>WIP)
+- [x] URI/URL encode/decode
 - [ ] Whirlpool
 - [x] XOR
 
