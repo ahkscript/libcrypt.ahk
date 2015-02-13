@@ -23,6 +23,8 @@ A collection of crypting and encoding functions from the community
 - [x] nnnik21
 - [x] XOR
 - [x] ROT5, ROT13, ROT18, ROT47
+- [ ] TEA (xxTEA)
+- [x] RC4
 
 ###A special thanks to  
 Bentschi, @AHK-just-me, @IsNull, @jNizM, @G33kDude, @joedf, @nnnik and others
