@@ -4,6 +4,7 @@ libcrypt.ahk
 A collection of crypting and encoding functions from the community
 
 ###Functions (WIP)  
+- [ ] 3DES
 - [ ] AES
 - [x] ASCII85
 - [x] ASCII->BinStr
@@ -16,6 +17,7 @@ A collection of crypting and encoding functions from the community
 - [x] MD2, MD4, MD5
 - [x] nnnik21
 - [ ] PBKDF2
+- [ ] RC2
 - [x] RC4
 - [x] ROT5, ROT13, ROT18, ROT47
 - [x] Secure Salted (Checksums)
