@@ -22,14 +22,22 @@ Version:   1.0  2005.07.08  First created
 Version:   2.0  2015.02.12  Updated as functions by joedf for Libcrypt
 */
 
-LC_TEA_Encrypt(Data)				; Text, key-name
-{
+LC_TEA_Encrypt(Data,Keys:="") {
+	
+	;Default Keys
 	static k1 := 0x11111111			; 128-bit secret key
 	static k2 := 0x22222222
 	static k3 := 0x33333333			; choose wisely!
 	static k4 := 0x44444444
-
-	Local p, i, L, u, v, k5, a, c, IV
+	
+	Loop 4
+	{
+		if StrLen(k%A_Index%)
+			k%A_Index% := Keys[A_Index]
+		else
+			break
+	}
+	
 	bkpBL:=A_BatchLines,bkpSCS:=A_StringCaseSense,bkpAT:=A_AutoTrim,bkpFI:=A_FormatInteger
 	SetBatchLines -1
 	StringCaseSense Off
@@ -50,79 +58,98 @@ LC_TEA_Encrypt(Data)				; Text, key-name
 	Loop % StrLen(Data)
 	{
 		i++
-		IfGreater i,8, {           ; all 9 pad values exhausted
+		if (i>8) {					; all 9 pad values exhausted
 			u := p
-			v := k5                 ; IV
-			p++                     ; increment counter
+			v := k5					; IV
+			p++						; increment counter
 			TEA(u,v,k1,k2,k3,k4)
-			Stream9(u,v)            ; 9 pads from encrypted counter
-			i = 0
+			s := Stream9(u,v)		; 9 pads from encrypted counter
+			i := 0
 		}
-		StringMid c, Data, A_Index, 1
-		a := Asc(c)
+		a:=Asc(c:=SubStr(Data,A_Index,1))
 		if a between 32 and 126
-		{                          ; chars > 126 or < 31 unchanged
-			a += s%i%
+		{							; chars > 126 or < 31 unchanged
+			a += s[i]
 			IfGreater a, 126, SetEnv, a, % a-95
 			c := Chr(a)
 		}
-		L = %L%%c%                 ; attach encrypted character
+		L .= c						; attach encrypted character
 	}
+	
 	SetBatchLines,%bkpBL%
 	StringCaseSense,%bkpSCS%
 	AutoTrim,%bkpAT%
 	SetFormat,Integer,%bkpFI%
+	
 	Return L
 }
 
 
-decrypt(T,key)                   ; Text, key-name
-{
-   Local p, i, L, u, v, k5, a, c
+LC_TEA_Decrypt(Data,Keys:="") {
+	
+	;Default Keys
+	static k1 := 0x11111111			; 128-bit secret key
+	static k2 := 0x22222222
+	static k3 := 0x33333333			; choose wisely!
+	static k4 := 0x44444444
+	
+	Loop 4
+	{
+		if StrLen(k%A_Index%)
+			k%A_Index% := Keys[A_Index]
+		else
+			break
+	}
+	
+	bkpBL:=A_BatchLines,bkpSCS:=A_StringCaseSense,bkpAT:=A_AutoTrim
+	SetBatchLines -1
+	StringCaseSense Off
+	AutoTrim Off
 
-   StringLeft p, T, 8
-   If p is not xdigit            ; if no IV: Error
-   {
-      ErrorLevel = 1
-      Return
-   }
-   StringTrimLeft T, T, 8        ; remove IV from text (no separator)
-   k5 = 0x%p%                    ; set new IV
-   p = 0                         ; counter to be encrypted
-   i = 9                         ; pad-index, force restart
-   L =                           ; processed text
-   k0 := %key%0
-   k1 := %key%1
-   k2 := %key%2
-   k3 := %key%3
-   Loop % StrLen(T)
-   {
-      i++
-      IfGreater i,8, {           ; all 9 pad values exhausted
-         u := p
-         v := k5                 ; IV
-         p++                     ; increment counter
-         TEA(u,v, k0,k1,k2,k3)
-         Stream9(u,v)            ; 9 pads from encrypted counter
-         i = 0
-      }
-      StringMid c, T, A_Index, 1
-      a := Asc(c)
-      if a between 32 and 126
-      {                          ; chars > 126 or < 31 unchanged
-         a -= s%i%
-         IfLess a, 32, SetEnv, a, % a+95
-         c := Chr(a)
-      }
-      L = %L%%c%                 ; attach encrypted character
-   }
-   Return L
- }
+	p:=SubStr(Data,1,8)
+	If p is not xdigit				; if no IV: Error
+	{
+		ErrorLevel := 1
+		Return
+	}
+	Data:=SubStr(Data,9)			; remove IV from text (no separator)
+	k5 := "0x" p					; set new IV
+	p := 0							; counter to be encrypted
+	i := 9							; pad-index, force restart
+	L := ""							; processed text
+
+	Loop % StrLen(Data)
+	{
+		i++
+		if (i,8) {					; all 9 pad values exhausted
+			u := p
+			v := k5					; IV
+			p++						; increment counter
+			TEA(u,v,k1,k2,k3,k4)
+			s := Stream9(u,v)		; 9 pads from encrypted counter
+			i := 0
+		}
+		a:=Asc(c:=SubStr(Data,A_Index,1))
+		if a between 32 and 126
+		{							; chars > 126 or < 31 unchanged
+			a -= s[i]
+			IfLess a, 32, SetEnv, a, % a+95
+			c := Chr(a)
+		}
+		L .= c						; attach encrypted character
+	}
+	
+	SetBatchLines,%bkpBL%
+	StringCaseSense,%bkpSCS%
+	AutoTrim,%bkpAT%
+	
+	Return L
+}
 
 TEA(ByRef y,ByRef z,k0,k1,k2,k3)	; (y,z) = 64-bit I/0 block
 {									; (k0,k1,k2,k3) = 128-bit key
-	IntFormat = %A_FormatInteger%
-	SetFormat Integer, D			; needed for decimal indices
+	IntFormat := A_FormatInteger
+	SetFormat, Integer, D			; needed for decimal indices
 	s := 0
 	d := 0x9E3779B9
 	Loop 32
@@ -133,20 +160,21 @@ TEA(ByRef y,ByRef z,k0,k1,k2,k3)	; (y,z) = 64-bit I/0 block
 		k := "k" . s >> 11 & 3
 		z := 0xFFFFFFFF & (z + ((y << 4 ^ y >> 5) + y  ^  s + %k%))
 	}
-	SetFormat Integer, %IntFormat%
+	SetFormat, Integer, %IntFormat%
 	y += 0
 	z += 0							; Convert to original ineger format
 }
 
 Stream9(x,y)	; Convert 2 32-bit words to 9 pad values
 {				; 0 <= s0, s1, ... s8 <= 94
-	Local z		; makes all s%i% global
-		s0 := Floor(x*0.000000022118911147) ; 95/2**32
+	s:=Object()
+	s[0] := Floor(x*0.000000022118911147) ; 95/2**32
 	Loop 8
 	{
 		z := (y << 25) + (x >> 7) & 0xFFFFFFFF
 		y := (x << 25) + (y >> 7) & 0xFFFFFFFF
-		x  = %z%
-		s%A_Index% := Floor(x*0.000000022118911147)
+		x := z
+		s[A_Index] := Floor(x*0.000000022118911147)
 	}
+	return s
 }
