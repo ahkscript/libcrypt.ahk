@@ -1,16 +1,16 @@
 ﻿; http://www.cix.co.uk/%7Eklockstone/xtea.pdf
-LC_xTEA_Encrypt(Data,Keys:="") {
+LC_xxTEA_Encrypt(Data,Keys:="") {
 	
 	; Default Keys
-	static k := [ 0x11111111		; 128-bit secret key
-				, 0x22222222
-				, 0x33333333		; choose wisely!
-				, 0x44444444 ]
+	static k := { 0 : 0x11111111		; 128-bit secret key
+				, 1 : 0x22222222
+				, 2 : 0x33333333		; choose wisely!
+				, 3 : 0x44444444 }
 	
 	Loop 4
 	{
-		if StrLen(k[A_Index])
-			k[A_Index] := Keys[A_Index]
+		if StrLen(Keys[A_Index])
+			k[A_Index-1] := Keys[A_Index]
 		else
 			break
 	}
@@ -37,18 +37,18 @@ LC_xTEA_Encrypt(Data,Keys:="") {
 }
 
 
-LC_xTEA_Decrypt(Data,Keys:="") {
+LC_xxTEA_Decrypt(Data,Keys:="") {
 	
 	; Default Keys
-	static k := [ 0x11111111		; 128-bit secret key
-				, 0x22222222
-				, 0x33333333		; choose wisely!
-				, 0x44444444 ]
+	static k := { 0 : 0x11111111		; 128-bit secret key
+				, 1 : 0x22222222
+				, 2 : 0x33333333		; choose wisely!
+				, 3 : 0x44444444 }
 	
 	Loop 4
 	{
-		if StrLen(k[A_Index])
-			k[A_Index] := Keys[A_Index]
+		if StrLen(Keys[A_Index])
+			k[A_Index-1] := Keys[A_Index]
 		else
 			break
 	}
@@ -68,9 +68,9 @@ LC_xTEA_Decrypt(Data,Keys:="") {
 	
 	Return L
 }
-
-; Adapted from : http://www.cix.co.uk/%7Eklockstone/xtea.pdf
 /*
+xTEA subroutines adapted from : http://www.cix.co.uk/%7Eklockstone/xtea.pdf
+
 Coding and Decoding Routine
 ----------------------------------------------------
 v gives the plain text of 2 words,
