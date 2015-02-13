@@ -14,8 +14,8 @@
 ;	because, in Div2, <spaces> and <New lines> count as a character.
 ;
 
-LC_Div2_encode(input, AutoTrimIsOn:=0, numproc:=1) {
-	if ( (AutoTrimIsOn) || InStr(A_AutoTrim,"on") )
+LC_Div2_encode(input, WithAutoTrim:=1, numproc:=1) {
+	if (WithAutoTrim)
 		StringReplace,input,input,%A_Space%,_,A
 	loop, %numproc%
 	{
@@ -39,8 +39,8 @@ LC_Div2_encode(input, AutoTrimIsOn:=0, numproc:=1) {
 	return final
 }
 
-LC_Div2_decode(input, AutoTrimIsOn:=0, numproc:=1) {
-	if ( (AutoTrimIsOn) || InStr(A_AutoTrim,"on") )
+LC_Div2_decode(input, WithAutoTrim:=1, numproc:=1) {
+	if (WithAutoTrim)
 		StringReplace,input,input,%A_Space%,_,A
 	loop, %numproc%
 	{
