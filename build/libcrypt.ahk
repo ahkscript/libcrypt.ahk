@@ -573,39 +573,16 @@ LC_RC4_Decrypt(Data,Pass) {
 
 LC_RC4(RC4Data,RC4Pass) { ; Thanks Rajat for original, Updated Libcrypt version
 	; http://www.autohotkey.com/board/topic/570-rc4-encryption/page-2#entry25712
-	ATrim:=A_AutoTrim, BLines:=A_BatchLines, RC4PassLen:=StrLen(RC4Pass)
+	ATrim:=A_AutoTrim, BLines:=A_BatchLines
 	AutoTrim, Off
 	SetBatchlines, -1
+	RC4PassLen:=StrLen(RC4Pass), Key:=Object(), sBox:=Object(), b:=0, RC4Result:="", i:=0, j:=0
 	Loop, 256
-	{
-		a:=(A_Index-1), ModVal:=Mod(a,RC4PassLen)
-		c:=SubStr(RC4Pass,ModVal+=1,1)
-		Key%a% := Asc(C)
-		sBox%a% = %a%
-	}
-	b:=0
+		a:=(A_Index-1), ModVal:=Mod(a,RC4PassLen), c:=SubStr(RC4Pass,ModVal+=1,1), Key[a]:=Asc(c), sBox[a]:=a
 	Loop, 256
-	{
-		a := A_Index - 1
-		TempVar := b + sBox%a% + Key%a%
-		b:=Mod(TempVar,256)
-		T := sBox%a%
-		sBox%a% := sBox%b%
-		sBox%b% = %T%
-	}
-	RC4Result:="", i:=0, j:=0
-	Loop, % DataLen:=StrLen(RC4Data)
-	{
-		i:=Mod(i+1,256)
-		TmpVar := sBox%i% + j
-		j:=Mod(TmpVar,256)
-		TmpVar := sBox%i% + sBox%j%
-		TmpVar2:=Mod(TmpVar,256)
-		k := sBox%TmpVar2%
-		StringMid, TmpVar, RC4Data, %A_Index%, 1
-		C:=Asc(TmpVar)^k, C:=((C==0)?k:c)
-		RC4Result .= Chr(C)
-	}
+		a:=(A_Index-1), b:=Mod(b+sBox[a]+Key[a],256), T:=sBox[a], sBox[a]:=sBox[b], sBox[b]:=T
+	Loop, Parse, RC4Data
+		i:=Mod(i+1,256), j:=Mod(sBox[i]+j,256),k:=sBox[Mod(sBox[i]+sBox[j],256)], c:=Asc(A_LoopField)^k, c:=((c==0)?k:c), RC4Result.=Chr(c)
 	AutoTrim, %ATrim%
 	SetBatchlines, %BLines%
 	Return RC4Result
