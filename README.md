@@ -15,6 +15,7 @@ A collection of crypting and encoding functions from the community
 - [x] HMAC (Checksums)
 - [x] MD2, MD4, MD5
 - [x] nnnik21
+- [ ] PBKDF2
 - [x] RC4
 - [x] ROT5, ROT13, ROT18, ROT47
 - [x] Secure Salted (Checksums)
