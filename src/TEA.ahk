@@ -1,121 +1,69 @@
-﻿LC_TEA_Encrypt(Data,Pass:="") {
-	key:=""
-	Loop, Parse, Pass
-	{
-		k .= Asc(A_LoopField)
-		if (A_Index>=16)
-			break
-	}
-	return LC_TEA(Data,32,Keys)
-}
-LC_TEA_Decrypt(Data,Pass:="") {
-	return LC_TEA(Data,-32,Keys)
-}
-
-/*
-Thanks to Chris Veness for inspiration
+﻿/*
+Thanks to Chris Veness for some inspiration
 https://github.com/chrisveness/crypto/blob/master/tea-block.js
 */
-/*
-Tea.encrypt = function(plaintext, password) {
-plaintext = String(plaintext);
-password = String(password);
-if (plaintext.length == 0) return(''); // nothing to encrypt
-// v is n-word data vector; converted to array of longs from UTF-8 string
-var v = Tea.strToLongs(plaintext.utf8Encode());
-// k is 4-word key; simply convert first 16 chars of password as key
-var k = Tea.strToLongs(password.utf8Encode().slice(0,16));
-var n = v.length;
-v = Tea.encode(v, k);
-// convert array of longs to string
-var ciphertext = Tea.longsToStr(v);
-// convert binary string to base64 ascii for safe transport
-return ciphertext.base64Encode();
-};
-
-Tea.decrypt = function(ciphertext, password) {
-ciphertext = String(ciphertext);
-password = String(password);
-if (ciphertext.length == 0) return('');
-// v is n-word data vector; converted to array of longs from base64 string
-var v = Tea.strToLongs(ciphertext.base64Decode());
-// k is 4-word key; simply convert first 16 chars of password as key
-var k = Tea.strToLongs(password.utf8Encode().slice(0,16));
-var n = v.length;
-v = Tea.decode(v, k);
-var plaintext = Tea.longsToStr(v);
-// strip trailing null chars resulting from filling 4-char blocks:
-plaintext = plaintext.replace(/\0+$/,'');
-return plaintext.utf8Decode();
-};
-
-Tea.strToLongs = function(s) {
-// note chars must be within ISO-8859-1 (Unicode code-point <= U+00FF) to fit 4/long
-var l = new Array(Math.ceil(s.length/4));
-for (var i=0; i<l.length; i++) {
-// note little-endian encoding - endianness is irrelevant as long as it matches longsToStr()
-l[i] = s.charCodeAt(i*4) + (s.charCodeAt(i*4+1)<<8) +
-(s.charCodeAt(i*4+2)<<16) + (s.charCodeAt(i*4+3)<<24);
+LC_TEA_Encrypt(Data,Pass:="") {
+	return LC_TEA(Data,Pass,1)
 }
-return l; // note running off the end of the string generates nulls since bitwise operators
-}; // treat NaN as 0
-;**
-;* Converts array of longs to string.
-;* @private
-;*/
-Tea.longsToStr = function(l) {
-var a = new Array(l.length);
-for (var i=0; i<l.length; i++) {
-a[i] = String.fromCharCode(l[i] & 0xFF, l[i]>>>8 & 0xFF, l[i]>>>16 & 0xFF, l[i]>>>24 & 0xFF);
+LC_TEA_Decrypt(Data,Pass:="") {
+	return LC_TEA(Data,Pass,-1)
 }
-return a.join(''); // use Array.join() for better performance than repeated string appends
-};
-
-;** Extend String object with method to encode multi-byte string to utf8
-;* - monsur.hossa.in/2012/07/20/utf-8-in-javascript.html
-;*
-if (typeof String.prototype.utf8Encode == 'undefined') {
-String.prototype.utf8Encode = function() {
-return unescape( encodeURIComponent( this ) );
-};
-}
-;** Extend String object with method to decode utf8 string to multi-byte
-if (typeof String.prototype.utf8Decode == 'undefined') {
-String.prototype.utf8Decode = function() {
-try {
-return decodeURIComponent( escape( this ) );
-} catch (e) {
-return this; // invalid UTF-8? return as-is
-}
-};
-}
-*/
-
-
-
-
-LC_TEA(d,n,Keys:="") {
-	; Default Keys
-	static k := { 0 : 0xDEADDEAD		; 128-bit secret key
-				, 1 : 0xFEEDFEED
-				, 2 : 0xFADEFADE		; choose wisely!
-				, 3 : 0x4BAD4BAD }
+LC_TEA(Data,Pass,z) {
+	if (VarSetCapacity(Data) == 0) ; // nothing to encrypt
+		return ""
 	
-	Loop 4
-	{
-		if StrLen(Keys[A_Index])
-			k[A_Index-1] := Keys[A_Index]
-		else
-			break
-	}
+	; Password must be 16 chars
+	Pass := SubStr(Pass "0123456789ABCDEF",1,16)
 	
 	; Encode block n = +32
 	; Decode block n = -32
 	; 2 block (32 bits) in v[]
 	
-	; Implementation [WIP]
+	; n > +1 = encoding
+	if (z > 0) {
+		v		:= LC_Str2Long(Data)
+		k		:= LC_Str2Long(Pass)
+		n		:= v.MaxIndex() + 1
+		tData	:= LC_xxTEA_Block(v,n,k)
+		sData	:= LC_Long2Str(tData)
+		EncLen	:= StrPut(Data,"UTF-16")*2
+		bData	:= LC_Base64_EncodeText(sData)
+		return bData
+	}
 	
-	return
+	; n < -1 = decoding
+	if (z < 0) {
+		bData	:= LC_Base64_DecodeText(Data)
+		v		:= LC_Str2Long(bData)
+		k		:= LC_Str2Long(Pass)
+		n		:= v.MaxIndex() + 1
+		tData	:= LC_xxTEA_Block(v,-n,k)
+		sData	:= LC_Long2Str(tData)
+		; strip trailing null chars resulting from filling 4-char blocks:
+		;plaintext = plaintext.replace(/\0+$/,'')
+		return sData
+	}
+	
+	return ""
+}
+LC_Str2Long(s,len:=0) { ; Converts string to array of longs.
+	len := (len>0)?len:StrLen(s)
+	l := Object()
+	i := 0
+	while (i<len) {
+		l[i] := Asc(SubStr(s,i*4,1)) + (Asc(SubStr(s,i*4+1,1))<<8) + (Asc(SubStr(s,i*4+2,1))<<16) + (Asc(SubStr(s,i*4+3,1))<<24)
+		i++
+	}
+	return l ; note running off the end of the string generates nulls since bitwise operators
+}
+LC_Long2Str(l) { ; Converts array of longs to string.
+	s := ""
+	i := 0
+	while (i<l.MaxIndex()) {
+		s .= Chr(l[i] & 0xFF) Chr(l[i]>>8 & 0xFF) Chr(l[i]>>16 & 0xFF) Chr(l[i]>>24 & 0xFF)
+		i++
+	}
+	return s
 }
 /*
 xTEA subroutines adapted from : http://en.wikipedia.org/wiki/XXTEA
@@ -144,12 +92,12 @@ LC_xxTEA_Block(v,n,k) {
 			y := v[0]
 			z := ( v[n-1] += ((z>>5)^(y<<2)) + (((y>>3)^(z<<4))^(sum^y)) + (k[(p&3)^e]^z) )
 		}
-		return 0
+		return v ;return 0
 	} else if (n < -1) {	; Decoding Part
 		n := -n
 		q := 6 + (52/n)
 		sum := q*DELTA
-		while (sum != 0) {
+		while (sum > 0) { ;joedf note: changed (sum != 0) to (sum > 0)
 			e := (sum >> 2) & 3
 			p:=n-1
 			while (p>0) {
@@ -160,7 +108,7 @@ LC_xxTEA_Block(v,n,k) {
 			y := ( v[0] -= ((z>>5)^(y<<2)) + (((y>>3)^(z<<4))^(sum^y)) + (k[(p&3)^e]^z) )
 			sum -= DELTA
 		}
-		return 0
+		return v ;return 0
 	}
-	return 1
+	return "" ;return 1
 }
