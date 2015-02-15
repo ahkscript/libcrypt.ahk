@@ -1,4 +1,4 @@
-LC_Version := "0.0.1.0"
+LC_Version := "0.0.17.21"
 
 LC_ASCII2BinStr(s,pretty:=0) {
 	r:=""
@@ -711,10 +711,9 @@ LC_TEA(Data,Pass,z) {
 	if (z > 0) {
 		v		:= LC_Str2Long(Data)
 		k		:= LC_Str2Long(Pass)
-		n		:= v.MaxIndex() + 1
+		n		:= (v.MaxIndex() + 1)
 		tData	:= LC_xxTEA_Block(v,n,k)
 		sData	:= LC_Long2Str(tData)
-		EncLen	:= StrPut(Data,"UTF-16")*2
 		bData	:= LC_Base64_EncodeText(sData)
 		return bData
 	}
@@ -724,7 +723,7 @@ LC_TEA(Data,Pass,z) {
 		bData	:= LC_Base64_DecodeText(Data)
 		v		:= LC_Str2Long(bData)
 		k		:= LC_Str2Long(Pass)
-		n		:= v.MaxIndex() + 1
+		n		:= (v.MaxIndex() + 1)
 		tData	:= LC_xxTEA_Block(v,-n,k)
 		sData	:= LC_Long2Str(tData)
 		; strip trailing null chars resulting from filling 4-char blocks:
@@ -785,7 +784,7 @@ LC_xxTEA_Block(v,n,k) {
 		n := -n
 		q := 6 + (52/n)
 		sum := q*DELTA
-		while (sum > 0) { ;joedf note: changed (sum != 0) to (sum > 0)
+		while (sum > 0) {	;joedf note: changed (sum != 0) to (sum > 0)
 			e := (sum >> 2) & 3
 			p:=n-1
 			while (p>0) {
