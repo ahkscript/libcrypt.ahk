@@ -22,8 +22,7 @@ A collection of crypting and encoding functions from the community
 - [x] ROT5, ROT13, ROT18, ROT47
 - [x] Secure Salted (Checksums)
 - [x] SHA-1
-- [ ] SHA-2
-- [x] SHA-256, SHA-384, SHA-512
+- [ ] SHA-2 (SHA-256, SHA-384, SHA-512)
 - [ ] TEA (xxTEA)
 - [ ] Tiger
 - [x] URI/URL encode/decode
