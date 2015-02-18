@@ -28,7 +28,7 @@ A collection of crypting and encoding functions from the community
 - [ ] TEA (xxTEA)
 - [ ] Tiger
 - [x] URI/URL encode/decode
-- [ ] Vigenère Cipher
+- [x] Vigenère Cipher
 - [ ] VxE (VxE-89, VxE-251)
 - [ ] Whirlpool
 - [x] XOR
