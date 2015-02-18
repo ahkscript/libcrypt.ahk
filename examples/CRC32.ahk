@@ -1,6 +1,5 @@
 ﻿#Include ..\build\libcrypt.ahk
 
-#Warn
 #NoEnv
 #SingleInstance Force
 SetBatchLines, -1

@@ -10,6 +10,7 @@ A collection of crypting and encoding functions from the community
 - [x] ASCII->BinStr
 - [x] Base64
 - [x] Bin / Hex
+- [x] Caesar Cipher
 - [x] CRC32
 - [x] Dec (2 to 36)
 - [x] Div2
@@ -27,6 +28,7 @@ A collection of crypting and encoding functions from the community
 - [ ] TEA (xxTEA)
 - [ ] Tiger
 - [x] URI/URL encode/decode
+- [ ] Vigenère Cipher
 - [ ] VxE (VxE-89, VxE-251)
 - [ ] Whirlpool
 - [x] XOR
