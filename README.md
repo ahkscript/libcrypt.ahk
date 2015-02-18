@@ -14,6 +14,7 @@ A collection of crypting and encoding functions from the community
 - [x] Dec (2 to 36)
 - [x] Div2
 - [x] HMAC (Checksums)
+- [ ] Laszlo Hash (L64, L128)
 - [x] MD2, MD4, MD5
 - [x] nnnik21
 - [ ] PBKDF2
@@ -26,6 +27,7 @@ A collection of crypting and encoding functions from the community
 - [ ] TEA (xxTEA)
 - [ ] Tiger
 - [x] URI/URL encode/decode
+- [ ] VxE (VxE-89, VxE-251)
 - [ ] Whirlpool
 - [x] XOR
 
