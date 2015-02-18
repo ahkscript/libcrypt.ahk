@@ -1,4 +1,4 @@
-LC_Version := "0.0.19.21"
+LC_Version := "0.0.19.23"
 
 LC_ASCII2Bin(s,pretty:=0) {
 	r:=""
