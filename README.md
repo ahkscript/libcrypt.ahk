@@ -7,7 +7,7 @@ A collection of crypting and encoding functions from the community
 - [ ] 3DES
 - [ ] AES
 - [x] ASCII85
-- [x] ASCII->BinStr
+- [x] ASCII / Binary
 - [x] Base64
 - [x] Bin / Hex
 - [x] Caesar Cipher

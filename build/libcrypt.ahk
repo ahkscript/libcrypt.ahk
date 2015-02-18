@@ -1,6 +1,6 @@
 LC_Version := "0.0.19.21"
 
-LC_ASCII2BinStr(s,pretty:=0) {
+LC_ASCII2Bin(s,pretty:=0) {
 	r:=""
 	Loop, % l:=StrLen(s)
 	{
@@ -12,6 +12,24 @@ LC_ASCII2BinStr(s,pretty:=0) {
 			r.=" "
 	}
 	return r
+}
+
+LC_Ascii2Bin2(Ascii) {
+	for each, Char in StrSplit(Ascii)
+	Loop, 8
+		Out .= !!(Asc(Char) & 1 << 8-A_Index)
+	return Out
+}
+ 
+LC_Bin2Ascii(Bin) {
+	Bin := RegExReplace(Bin, "[^10]")
+	Loop, % StrLen(Bin) / 8
+	{
+		for each, Bit in StrSplit(SubStr(Bin, A_Index*8-7, 8))
+			Asc += Asc + Bit
+		Out .= Chr(Asc), Asc := 0
+	}
+	return Out
 }
 
 LC_Base64_EncodeText(Text,Encoding="UTF-8")
