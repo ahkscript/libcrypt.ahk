@@ -29,3 +29,39 @@ LC_Bin2Ascii(Bin) {
 	}
 	return Out
 }
+
+LC_BinStr_EncodeText(Text, Pretty=False, Encoding="UTF-8") {
+	VarSetCapacity(Bin, StrPut(Text, Encoding))
+	LC_BinStr_Encode(BinStr, Bin, StrPut(Text, &Bin, Encoding)-1, Pretty)
+	return BinStr
+}
+
+LC_BinStr_DecodeText(Text, Encoding="UTF-8") {
+	Len := LC_BinStr_Decode(Bin, Text)
+	return StrGet(&Bin, Encoding)
+}
+
+LC_BinStr_Encode(ByRef Out, ByRef In, InLen, Pretty=False) {
+	Loop, % InLen
+	{
+		Byte := NumGet(In, A_Index-1, "UChar")
+		Loop, 8
+			Out .= Byte>>(8-A_Index) & 1
+		if Pretty ; Perhaps a regex at the end instead of a check in every loop would be better
+			Out .= " "
+	}
+	; Out := RegExReplace(Out, "(\d{8})", "$1 ") ; For example, this
+}
+
+LC_BinStr_Decode(ByRef Out, ByRef In) {
+	ByteCount := StrLen(In)/8
+	VarSetCapacity(Out, ByteCount, 0)
+	BitIndex := 1
+	Loop, % ByteCount
+	{
+		Byte := 0
+		Loop, 8
+			Byte := Byte<<1 | SubStr(In, BitIndex++, 1)
+		NumPut(Byte, Out, A_Index-1, "UChar")
+	}
+}
