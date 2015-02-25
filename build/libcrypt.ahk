@@ -32,6 +32,42 @@ LC_Bin2Ascii(Bin) {
 	return Out
 }
 
+LC_BinStr_EncodeText(Text, Pretty=False, Encoding="UTF-8") {
+	VarSetCapacity(Bin, StrPut(Text, Encoding))
+	LC_BinStr_Encode(BinStr, Bin, StrPut(Text, &Bin, Encoding)-1, Pretty)
+	return BinStr
+}
+
+LC_BinStr_DecodeText(Text, Encoding="UTF-8") {
+	Len := LC_BinStr_Decode(Bin, Text)
+	return StrGet(&Bin, Encoding)
+}
+
+LC_BinStr_Encode(ByRef Out, ByRef In, InLen, Pretty=False) {
+	Loop, % InLen
+	{
+		Byte := NumGet(In, A_Index-1, "UChar")
+		Loop, 8
+			Out .= Byte>>(8-A_Index) & 1
+		if Pretty ; Perhaps a regex at the end instead of a check in every loop would be better
+			Out .= " "
+	}
+	; Out := RegExReplace(Out, "(\d{8})", "$1 ") ; For example, this
+}
+
+LC_BinStr_Decode(ByRef Out, ByRef In) {
+	ByteCount := StrLen(In)/8
+	VarSetCapacity(Out, ByteCount, 0)
+	BitIndex := 1
+	Loop, % ByteCount
+	{
+		Byte := 0
+		Loop, 8
+			Byte := Byte<<1 | SubStr(In, BitIndex++, 1)
+		NumPut(Byte, Out, A_Index-1, "UChar")
+	}
+}
+
 LC_Base64_EncodeText(Text,Encoding="UTF-8")
 {
 	VarSetCapacity(Bin, StrPut(Text, Encoding))
@@ -675,8 +711,7 @@ LC_AddrSHA512(addr, length) {
 }
 
 ; Modified by GeekDude from http://goo.gl/0a0iJq
-LC_UriEncode(Uri)
-{
+LC_UriEncode(Uri) {
 	VarSetCapacity(Var, StrPut(Uri, "UTF-8"), 0), StrPut(Uri, &Var, "UTF-8")
 	f := A_FormatInteger
 	SetFormat, IntegerFast, H
@@ -691,8 +726,7 @@ LC_UriEncode(Uri)
 	Return, Res
 }
 
-LC_UriDecode(Uri)
-{
+LC_UriDecode(Uri) {
 	Pos := 1
 	While Pos := RegExMatch(Uri, "i)(%[\da-f]{2})+", Code, Pos)
 	{
@@ -705,17 +739,17 @@ LC_UriDecode(Uri)
 }
 
 ;----------------------------------
-LC_UrlEncode(url) {
+LC_UrlEncode(url) { ; keep ":/;?@,&=+$#"
 	a:=StrLen(url), b:=StrLen(URIs:=RegExReplace(url,"\w+:\/{0,2}[^\/]+.\/")), r:=SubStr(url,1,a-b)
-	for each, uri in StrSplit(URIs,"/")
-		r .= LC_UriEncode(uri) "/"
-	return SubStr(r,1,-1)
+	Loop, Parse, URIs
+		if A_LoopField in :,/,;,?,@,`,,&,=,+,$,#
+			r .= A_LoopField
+		else
+			r .= LC_UriEncode(A_LoopField)
+	return r
 }
 LC_UrlDecode(url) {
-	a:=StrLen(url), b:=StrLen(URIs:=RegExReplace(url,"\w+:\/{0,2}[^\/]+.\/")), r:=SubStr(url,1,a-b)
-	for each, uri in StrSplit(URIs,"/")
-		r .= LC_UriDecode(uri) "/"
-	return SubStr(r,1,-1)
+	return LC_UriDecode(url)
 }
 
 ; 

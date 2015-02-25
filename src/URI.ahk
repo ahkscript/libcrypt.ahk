@@ -1,6 +1,5 @@
 ﻿; Modified by GeekDude from http://goo.gl/0a0iJq
-LC_UriEncode(Uri)
-{
+LC_UriEncode(Uri) {
 	VarSetCapacity(Var, StrPut(Uri, "UTF-8"), 0), StrPut(Uri, &Var, "UTF-8")
 	f := A_FormatInteger
 	SetFormat, IntegerFast, H
@@ -15,8 +14,7 @@ LC_UriEncode(Uri)
 	Return, Res
 }
 
-LC_UriDecode(Uri)
-{
+LC_UriDecode(Uri) {
 	Pos := 1
 	While Pos := RegExMatch(Uri, "i)(%[\da-f]{2})+", Code, Pos)
 	{
@@ -29,15 +27,15 @@ LC_UriDecode(Uri)
 }
 
 ;----------------------------------
-LC_UrlEncode(url) {
+LC_UrlEncode(url) { ; keep ":/;?@,&=+$#"
 	a:=StrLen(url), b:=StrLen(URIs:=RegExReplace(url,"\w+:\/{0,2}[^\/]+.\/")), r:=SubStr(url,1,a-b)
-	for each, uri in StrSplit(URIs,"/")
-		r .= LC_UriEncode(uri) "/"
-	return SubStr(r,1,-1)
+	Loop, Parse, URIs
+		if A_LoopField in :,/,;,?,@,`,,&,=,+,$,#
+			r .= A_LoopField
+		else
+			r .= LC_UriEncode(A_LoopField)
+	return r
 }
 LC_UrlDecode(url) {
-	a:=StrLen(url), b:=StrLen(URIs:=RegExReplace(url,"\w+:\/{0,2}[^\/]+.\/")), r:=SubStr(url,1,a-b)
-	for each, uri in StrSplit(URIs,"/")
-		r .= LC_UriDecode(uri) "/"
-	return SubStr(r,1,-1)
+	return LC_UriDecode(url)
 }
