@@ -29,7 +29,7 @@ A collection of crypting and encoding functions from the community
 - [ ] Tiger
 - [x] URI/URL encode/decode
 - [x] Vigenère Cipher
-- [ ] VxE (VxE-89, VxE-251)
+- [x] VxE (VxE-89, VxE-251)
 - [ ] Whirlpool
 - [x] XOR
 
