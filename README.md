@@ -7,13 +7,16 @@ A collection of crypting and encoding functions from the community
 - [ ] 3DES
 - [ ] AES
 - [x] ASCII85
-- [x] ASCII->BinStr
+- [x] ASCII / Binary
 - [x] Base64
 - [x] Bin / Hex
+- [ ] Blowfish
+- [x] Caesar Cipher
 - [x] CRC32
 - [x] Dec (2 to 36)
 - [x] Div2
 - [x] HMAC (Checksums)
+- [ ] Laszlo Hash (L64, L128)
 - [x] MD2, MD4, MD5
 - [x] nnnik21
 - [ ] PBKDF2
@@ -22,11 +25,12 @@ A collection of crypting and encoding functions from the community
 - [x] ROT5, ROT13, ROT18, ROT47
 - [x] Secure Salted (Checksums)
 - [x] SHA-1
-- [ ] SHA-2
-- [x] SHA-256, SHA-384, SHA-512
+- [x] SHA-2 (SHA-256, SHA-384, SHA-512)
 - [ ] TEA (xxTEA)
 - [ ] Tiger
 - [x] URI/URL encode/decode
+- [x] Vigenère Cipher
+- [x] VxE (VxE-89, VxE-251)
 - [ ] Whirlpool
 - [x] XOR
 

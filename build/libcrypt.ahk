@@ -1,6 +1,6 @@
-LC_Version := "0.0.17.21"
+LC_Version := "0.0.20.24"
 
-LC_ASCII2BinStr(s,pretty:=0) {
+LC_ASCII2Bin(s,pretty:=0) {
 	r:=""
 	Loop, % l:=StrLen(s)
 	{
@@ -14,54 +14,58 @@ LC_ASCII2BinStr(s,pretty:=0) {
 	return r
 }
 
- ; by Titan
- ; with a few modifications
-LC_ASCII85_Encode(str) {
-	x:="",tr:="",i:="", xFI := A_FormatInteger
-	SetFormat, Integer, Hex
-	Loop, Parse, str
-		If !Mod(A_Index, 4) || ((StrLen(str) / A_Index) == 1) {
-			x := x . Asc(A_LoopField)
-			If ( ((StrLen(str) / A_Index) == 1) && Mod(A_Index, 4) )
-				tr := 4 - Mod(A_Index, 4)
-			Loop, %tr%
-				x := x . 0x00
-			StringReplace, x, x, 0x, , 1
-			x =0x%x%
-			SetFormat, Integer, D
-			x += 0
-			Loop, 5
-				i := i . Chr((Floor(Mod(x / (85 ** (5 - A_Index)), 85))) + 33)
-			SetFormat, Integer, Hex
-			StringTrimLeft, x, x, 4
-			x := ""
-		} Else x := x . Asc(A_LoopField)
-	StringReplace, i, i, !!!!!, z, 1
-	StringTrimRight, i, i, %tr%
-	SetFormat, Integer, %xFI%
-	Return, "<~" . i . "~>"
+LC_Ascii2Bin2(Ascii) {
+	for each, Char in StrSplit(Ascii)
+	Loop, 8
+		Out .= !!(Asc(Char) & 1 << 8-A_Index)
+	return Out
 }
-LC_ASCII85_Decode(str) {
-	x:="",tr:="",i:="", xFI := A_FormatInteger
-	StringReplace, str, str, <~
-	StringReplace, str, str, ~>
-	Loop, Parse, str
-		If ( !Mod(A_Index, 5) || ((StrLen(str) / A_Index) == 1) ) {
-			If ( (StrLen(str) / A_Index) == 1 )
-				tr := 5 - Mod(A_Index, 5)
-			Loop, %tr%
-				x += (Asc("0x00") - 33) * (85 ** 5 - (5 - (5 - Mod(A_Index, 5))))
-			x += Asc(A_LoopField) - 33
-			SetFormat, Integer, Hex
-			x += 0
-			Loop, 4 {
-				StringMid, a, x, (A_Index * 2) + 1, 2
-				i := i . Chr("0x" . a)
-			} SetFormat, Integer, D
-			x = 0
-		} Else x += (Asc(A_LoopField) - 33) * (85 ** (5 - Mod(A_Index, 5)))
-	StringTrimRight, i, i, %tr%
-	Return, i
+ 
+LC_Bin2Ascii(Bin) {
+	Bin := RegExReplace(Bin, "[^10]")
+	Loop, % StrLen(Bin) / 8
+	{
+		for each, Bit in StrSplit(SubStr(Bin, A_Index*8-7, 8))
+			Asc += Asc + Bit
+		Out .= Chr(Asc), Asc := 0
+	}
+	return Out
+}
+
+LC_BinStr_EncodeText(Text, Pretty=False, Encoding="UTF-8") {
+	VarSetCapacity(Bin, StrPut(Text, Encoding))
+	LC_BinStr_Encode(BinStr, Bin, StrPut(Text, &Bin, Encoding)-1, Pretty)
+	return BinStr
+}
+
+LC_BinStr_DecodeText(Text, Encoding="UTF-8") {
+	Len := LC_BinStr_Decode(Bin, Text)
+	return StrGet(&Bin, Encoding)
+}
+
+LC_BinStr_Encode(ByRef Out, ByRef In, InLen, Pretty=False) {
+	Loop, % InLen
+	{
+		Byte := NumGet(In, A_Index-1, "UChar")
+		Loop, 8
+			Out .= Byte>>(8-A_Index) & 1
+		if Pretty ; Perhaps a regex at the end instead of a check in every loop would be better
+			Out .= " "
+	}
+	; Out := RegExReplace(Out, "(\d{8})", "$1 ") ; For example, this
+}
+
+LC_BinStr_Decode(ByRef Out, ByRef In) {
+	ByteCount := StrLen(In)/8
+	VarSetCapacity(Out, ByteCount, 0)
+	BitIndex := 1
+	Loop, % ByteCount
+	{
+		Byte := 0
+		Loop, 8
+			Byte := Byte<<1 | SubStr(In, BitIndex++, 1)
+		NumPut(Byte, Out, A_Index-1, "UChar")
+	}
 }
 
 LC_Base64_EncodeText(Text,Encoding="UTF-8")
@@ -116,6 +120,26 @@ LC_Str2Bin(ByRef Out, ByRef In, Flags)
 	DllCall("Crypt32.dll\CryptStringToBinary", "Ptr", &In, "UInt", StrLen(In)
 	, "UInt", Flags, "Str", Out, "UInt*", OutLen, "Ptr", 0, "Ptr", 0)
 	return OutLen
+}
+
+; 
+; Version: 2014.03.06-1518, jNizM
+; see https://en.wikipedia.org/wiki/Caesar_cipher
+; ===================================================================================
+
+LC_Caesar(string, num := 2) {
+    ret := c := ""
+    loop, parse, string
+    {
+        c := Asc(A_LoopField)
+        if (c > 64) && (c < 91)
+            ret .= Chr(Mod(c - 65 + num, 26) + 65)
+        else if (c > 96) && (c < 123)
+            ret .= Chr(Mod(c - 97 + num, 26) + 97)
+        else
+            ret .= A_LoopField
+    }
+    return ret
 }
 
 LC_CalcAddrHash(addr, length, algid, byref hash = 0, byref hashlength = 0) {
@@ -686,163 +710,182 @@ LC_AddrSHA512(addr, length) {
 	return LC_CalcAddrHash(addr, length, 0x800e)
 }
 
-/*
-Thanks to Chris Veness for some inspiration
-https://github.com/chrisveness/crypto/blob/master/tea-block.js
-*/
-LC_TEA_Encrypt(Data,Pass:="") {
-	return LC_TEA(Data,Pass,1)
-}
-LC_TEA_Decrypt(Data,Pass:="") {
-	return LC_TEA(Data,Pass,-1)
-}
-LC_TEA(Data,Pass,z) {
-	if (VarSetCapacity(Data) == 0) ; // nothing to encrypt
-		return ""
-	
-	; Password must be 16 chars
-	Pass := SubStr(Pass "0123456789ABCDEF",1,16)
-	
-	; Encode block n = +32
-	; Decode block n = -32
-	; 2 block (32 bits) in v[]
-	
-	; n > +1 = encoding
-	if (z > 0) {
-		v		:= LC_Str2Long(Data)
-		k		:= LC_Str2Long(Pass)
-		n		:= (v.MaxIndex() + 1)
-		tData	:= LC_xxTEA_Block(v,n,k)
-		sData	:= LC_Long2Str(tData)
-		bData	:= LC_Base64_EncodeText(sData)
-		return bData
-	}
-	
-	; n < -1 = decoding
-	if (z < 0) {
-		bData	:= LC_Base64_DecodeText(Data)
-		v		:= LC_Str2Long(bData)
-		k		:= LC_Str2Long(Pass)
-		n		:= (v.MaxIndex() + 1)
-		tData	:= LC_xxTEA_Block(v,-n,k)
-		sData	:= LC_Long2Str(tData)
-		; strip trailing null chars resulting from filling 4-char blocks:
-		;plaintext = plaintext.replace(/\0+$/,'')
-		return sData
-	}
-	
-	return ""
-}
-LC_Str2Long(s,len:=0) { ; Converts string to array of longs.
-	len := (len>0)?len:StrLen(s)
-	l := Object()
-	i := 0
-	while (i<len) {
-		l[i] := Asc(SubStr(s,i*4,1)) + (Asc(SubStr(s,i*4+1,1))<<8) + (Asc(SubStr(s,i*4+2,1))<<16) + (Asc(SubStr(s,i*4+3,1))<<24)
-		i++
-	}
-	return l ; note running off the end of the string generates nulls since bitwise operators
-}
-LC_Long2Str(l) { ; Converts array of longs to string.
-	s := ""
-	i := 0
-	while (i<l.MaxIndex()) {
-		s .= Chr(l[i] & 0xFF) Chr(l[i]>>8 & 0xFF) Chr(l[i]>>16 & 0xFF) Chr(l[i]>>24 & 0xFF)
-		i++
-	}
-	return s
-}
-/*
-xTEA subroutines adapted from : http://en.wikipedia.org/wiki/XXTEA
-
-Coding and Decoding Routine
-----------------------------------------------------
-    BTEA will encode or decode n words as a single block where n > 1
-		- v is the n word data vector
-		- k is the 4 word key
-		- n is negative for decoding
-		- if n is zero result is 1 and no coding or decoding takes place, otherwise the result is zero
-		- assumes 32 bit 'long' and same endian coding and decoding
-*/
-LC_xxTEA_Block(v,n,k) {
-	z:=v[n-1], y:=v[0], sum:=0, DELTA:=0x9e3779b9
-	if (n > 1) {			; Coding Part
-		q = 6 + (52/n)
-		while (q-- > 0) {
-			sum += DELTA
-			e := (sum >> 2) & 3
-			p:=0
-			while (p<n-1) {
-				y := v[p+1], z := ( v[p] += ((z>>5)^(y<<2)) + (((y>>3)^(z<<4))^(sum^y)) + (k[(p&3)^e]^z) )
-				p++
-			}
-			y := v[0]
-			z := ( v[n-1] += ((z>>5)^(y<<2)) + (((y>>3)^(z<<4))^(sum^y)) + (k[(p&3)^e]^z) )
-		}
-		return v ;return 0
-	} else if (n < -1) {	; Decoding Part
-		n := -n
-		q := 6 + (52/n)
-		sum := q*DELTA
-		while (sum > 0) {	;joedf note: changed (sum != 0) to (sum > 0)
-			e := (sum >> 2) & 3
-			p:=n-1
-			while (p>0) {
-				z := v[p-1], y := ( v[p] -= ((z>>5)^(y<<2)) + (((y>>3)^(z<<4))^(sum^y)) + (k[(p&3)^e]^z) )
-				p--
-			}
-			z := v[n-1]
-			y := ( v[0] -= ((z>>5)^(y<<2)) + (((y>>3)^(z<<4))^(sum^y)) + (k[(p&3)^e]^z) )
-			sum -= DELTA
-		}
-		return v ;return 0
-	}
-	return "" ;return 1
-}
-
 ; Modified by GeekDude from http://goo.gl/0a0iJq
-LC_UriEncode(Uri)
-{
+LC_UriEncode(Uri, RE="[0-9A-Za-z]") {
 	VarSetCapacity(Var, StrPut(Uri, "UTF-8"), 0), StrPut(Uri, &Var, "UTF-8")
-	f := A_FormatInteger
-	SetFormat, IntegerFast, H
 	While Code := NumGet(Var, A_Index - 1, "UChar")
-		If (Code >= 0x30 && Code <= 0x39	; 0-9
-		|| Code >= 0x41 && Code <= 0x5A		; A-Z
-		|| Code >= 0x61 && Code <= 0x7A)	; a-z
-			Res .= Chr(Code)
-	Else
-		Res .= "%" . SubStr(Code + 0x100, -1)
-	SetFormat, IntegerFast, %f%
+		Res .= (Chr:=Chr(Code)) ~= RE ? Chr : Format("%{:02X}", Code)
 	Return, Res
 }
 
-LC_UriDecode(Uri)
-{
+LC_UriDecode(Uri) {
 	Pos := 1
 	While Pos := RegExMatch(Uri, "i)(%[\da-f]{2})+", Code, Pos)
 	{
 		VarSetCapacity(Var, StrLen(Code) // 3, 0), Code := SubStr(Code,2)
 		Loop, Parse, Code, `%
 			NumPut("0x" A_LoopField, Var, A_Index-1, "UChar")
-		StringReplace, Uri, Uri, `%%Code%, % StrGet(&Var, "UTF-8"), All
+		Decoded := StrGet(&Var, "UTF-8")
+		Uri := SubStr(Uri, 1, Pos-1) . Decoded . SubStr(Uri, Pos+StrLen(Code)+1)
+		Pos += StrLen(Decoded)+1
 	}
 	Return, Uri
 }
 
 ;----------------------------------
-LC_UrlEncode(url) {
-	a:=StrLen(url), b:=StrLen(URIs:=RegExReplace(url,"\w+:\/{0,2}[^\/]+.\/")), r:=SubStr(url,1,a-b)
-	for each, uri in StrSplit(URIs,"/")
-		r .= LC_UriEncode(uri) "/"
-	return SubStr(r,1,-1)
+
+LC_UrlEncode(Url) { ; keep ":/;?@,&=+$#."
+	return LC_UriEncode(Url, "[0-9a-zA-Z:/;?@,&=+$#.]")
 }
+
 LC_UrlDecode(url) {
-	a:=StrLen(url), b:=StrLen(URIs:=RegExReplace(url,"\w+:\/{0,2}[^\/]+.\/")), r:=SubStr(url,1,a-b)
-	for each, uri in StrSplit(URIs,"/")
-		r .= LC_UriDecode(uri) "/"
-	return SubStr(r,1,-1)
+	return LC_UriDecode(url)
 }
+
+; 
+; Version: 2014.03.06-1518, jNizM
+; see https://en.wikipedia.org/wiki/Vigen%C3%A8re_cipher
+; ===================================================================================
+
+LC_VigenereCipher(string, key, enc := 1) {
+	enc := "", DllCall("user32.dll\CharUpper", "Ptr", &string, "Ptr")
+	, string := RegExReplace(StrGet(&string), "[^A-Z]")
+	loop, parse, string
+	{
+		a := Asc(A_LoopField) - 65
+		, b := Asc(SubStr(key, 1 + Mod(A_Index - 1, StrLen(key)), 1)) - 65
+		, enc .= Chr(Mod(a + b, 26) + 65)
+	}
+	return enc
+}
+
+LC_VigenereDecipher(string, key) {
+	dec := ""
+	loop, parse, key
+		dec .= Chr(26 - (Asc(A_LoopField) - 65) + 65)
+	return LC_VigenereCipher(string, dec)
+}
+
+; FUnctions and algorithm by VxE
+; intergrated into libcrypt.ahk with "LC_" prefixes
+
+/*
+####################################################################################################
+####################################################################################################
+######                                                                                        ######
+######                                [VxE]-251 Encryption                                    ######
+######                                          &                                             ######
+######                                [VxE]-89  Encryption                                    ######
+######                                                                                        ######
+####################################################################################################
+####################################################################################################
+
+[VxE] 251 encryption is a rotation-based encryption algorithm using a dynamic key and a
+dynamic map. The '251' indicates the size of the map, which omits the following byte-values:
+0x00 ( null byte: string terminator )
+0x09 ( tab character: common text formatting character )
+0x0A ( newline character: common text formatting character )
+0x0D ( carriage return character: common text formatting character )
+0x7F ( wierd character: ascii 'del' )
+
+This encryption function also supports an 89-character map, which incorporates the byte values
+between 0x20 and 0x7e, omitting 0x22, 0x27, 0x2C, 0x2F, 0x5C, and 0x60. This mode allows text value
+input to be encrypted as text without high-ascii characters or non-printable characters.
+*/
+
+; ##################################################################################################
+; ## Function shortcuts
+
+LC_VxE_Encrypt89( key, byref message ) { ; ----------------------------------------------------------
+   Return LC_VxE_Crypt( key, message, 1, "vxe89 len" StrLen( message ) << !!A_IsUnicode )
+} ; VxE_Encrypt89( key, byref message ) ----------------------------------------------------------
+
+LC_VxE_Decrypt89( key, byref message ) { ; ----------------------------------------------------------
+   Return LC_VxE_Crypt( key, message, 0, "vxe89 len" StrLen( message ) << !!A_IsUnicode )
+} ; VxE_Decrypt89( key, byref message ) ----------------------------------------------------------
+
+LC_VxE_Encrypt251( key, byref message, len ) { ; ----------------------------------------------------
+   Return LC_VxE_Crypt( key, message, 1, "len" len )
+} ; VxE_Encrypt251( key, byref message, len ) ----------------------------------------------------
+
+LC_VxE_Decrypt251( key, byref message, len ) { ; ----------------------------------------------------
+   Return LC_VxE_Crypt( key, message, 0, "len" len )
+} ; VxE_Decrypt251( key, byref message, len ) ----------------------------------------------------
+
+; ##################################################################################################
+; ## The core function
+
+LC_VxE_Crypt( key, byref message, direction = 1, options="" ) { ; -----------------------------------
+; Transorms the message. 'direction' indicates whether or not to decrypt or encrypt the message.
+; However, since this algorithm is symmetrical, distinguishing between 'encrypt' and 'decrypt' is
+; merely for the benefit of human understanding.
+
+; This agorithm was developed by [VxE] in July 2010. When a key/message are passed to this function,
+; it generates the rotation map using the key. Then, it traverses the bytes in the message, rotating
+; their values along the map according to the key. Once the character's encoded value is determined,
+; the key is augmented by a value based on the byte value.
+
+   If !RegexMatch( options, "i)(?:len|l)\K(?:0x[\da-fA-F]+|\d+)", length ) ; check explicit length
+      length := StrLen( message ) << !!A_IsUnicode ; otherwise, find length.
+   UseVxE89 := InStr( options, "vxe89" ) ; check 'options' for text-friendly mode.
+   direction := 2 * ( direction = 1 ) - 1 ; coerce the 'direction' to either +1 or -1.
+
+   w := StrLen( key ) << !!A_IsUnicode
+   ; 'w' holds the derived key, which is a 32-bit integer based on the key.
+   ; Although this doesn't seem very entropic, remember that the map is also derived from the key.
+   
+   If (UseVxE89) ; using the smaller map allows text-friendly encrypting since the small map is
+      Loop 126 ; composed only of low-ascii printable characters
+         If ( A_Index >= 32 && A_Index != 34 && A_Index != 39 && A_Index != 44
+         && A_Index != 47 && A_Index != 92 && A_Index != 96 )
+            map .= Chr( A_Index )
+   If !UseVxE89 ; the 251 map is more suitable for non-text data
+      Loop 255
+         If ( A_Index != 9 && A_Index != 10 && A_Index != 13 && A_Index != 127 )
+            map .= Chr( A_Index )
+   k := StrLen( map ) ; keep the length of the map
+
+   Loop 9 ; pad the key up to 509 characters, mixing in digit-characters
+      If StrLen( key ) < 509
+         key := SubStr( key Chr( 48 + A_Index ) key, 1, 509 )
+
+   Loop 509 ; rearrange the map, using the padded key as the selector.
+   { ; This is how the map becomes dynamic. 509 times, a char is selected from the map and
+   ; is extracted from the map string, then appended to it. At the same time, the derived key is
+   ; augmented by XORing it with a value based on each byte in the key.
+      q := *( &key + A_Index - 1 )
+      pos := 1 + Mod( q * A_Index * 3, k )
+      StringMid, e, map, %pos%, 1
+      StringLeft, i, map, pos - 1
+      StringTrimLeft, c, map, %pos%
+      map := i c e
+      w ^= q * A_Index * 1657
+   }
+   x := 0
+   Loop %length%
+   {
+      c := NumGet( message, A_Index - 1, "UChar" ) ; for each byte in the message
+
+      If !c || !( i := InStr( map, Chr( c ), 1 ) )
+         Continue ; if the character isn't in the map, just skip it.
+      i-- ; the map index should be zero based for easier use with Mod() function
+      x++ ; this tracks the actual index, not the char position.
+
+      e := Mod( 223390000 + i + w * direction, k ) ; rotate the index along the map
+
+      c := Asc( SubStr( map, e + 1, 1 ) ) ; lookup the character at the rotated index
+
+      NumPut( c, message, A_Index - 1, "UChar" ) ; append the newly-mapped char to the result
+
+      ; Finally, depending on the direction of rotation, use either the original index or
+      ; the rotated index to augment the derived key
+      If ( direction = 1 )
+         c := Mod( e + x, 251 )
+      Else c := Mod( i + x, 251 )
+      w ^= c | c << 8 | c << 16 | c << 24
+   }
+   return length
+} ; VxE_Crypt( key, byref message, direction = 1, options="" ) -----------------------------------
 
 LC_XOR_Encrypt(str,key) {
 	EncLen:=StrPut(Str,"UTF-16")*2
