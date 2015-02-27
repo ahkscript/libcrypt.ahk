@@ -731,15 +731,11 @@ LC_UriDecode(Uri) {
 }
 
 ;----------------------------------
-LC_UrlEncode(url) { ; keep ":/;?@,&=+$#"
-	a:=StrLen(url), b:=StrLen(URIs:=RegExReplace(url,"\w+:\/{0,2}[^\/]+.\/")), r:=SubStr(url,1,a-b)
-	Loop, Parse, URIs
-		if A_LoopField in :,/,;,?,@,`,,&,=,+,$,#
-			r .= A_LoopField
-		else
-			r .= LC_UriEncode(A_LoopField)
-	return r
+
+LC_UrlEncode(Url) { ; keep ":/;?@,&=+$#."
+	return LC_UriEncode(Url, "[0-9a-zA-Z:/;?@,&=+$#.]")
 }
+
 LC_UrlDecode(url) {
 	return LC_UriDecode(url)
 }
