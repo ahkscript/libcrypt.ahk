@@ -13,7 +13,9 @@ LC_UriDecode(Uri) {
 		VarSetCapacity(Var, StrLen(Code) // 3, 0), Code := SubStr(Code,2)
 		Loop, Parse, Code, `%
 			NumPut("0x" A_LoopField, Var, A_Index-1, "UChar")
-		StringReplace, Uri, Uri, `%%Code%, % StrGet(&Var, "UTF-8"), All
+		Decoded := StrGet(&Var, "UTF-8")
+		Uri := SubStr(Uri, 1, Pos-1) . Decoded . SubStr(Uri, Pos+StrLen(Code)+1)
+		Pos += StrLen(Decoded)+1
 	}
 	Return, Uri
 }
