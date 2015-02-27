@@ -10,6 +10,7 @@ A collection of crypting and encoding functions from the community
 - [x] ASCII / Binary
 - [x] Base64
 - [x] Bin / Hex
+- [ ] Blowfish
 - [x] Caesar Cipher
 - [x] CRC32
 - [x] Dec (2 to 36)
