@@ -4,35 +4,44 @@ libcrypt.ahk
 A collection of crypting and encoding functions from the community
 
 ###Functions (WIP)  
+Hashing:
+- [x] CRC32
+- [x] MD2, MD4, MD5
+- [x] SHA-1
+- [x] SHA-2 (SHA-256, SHA-384, SHA-512)
+- [x] HMAC (Checksums)
+- [x] Secure Salted (Checksums)
+- [ ] Tiger
+- [ ] Whirlpool
+  
+Hashing (Custom):
+- [ ] Laszlo Hash (L64, L128)
+  
+En-/Decryption:
 - [ ] 3DES
 - [ ] AES
+- [ ] Blowfish
+- [x] Caesar Cipher
+- [ ] RC2
+- [x] RC4
+- [ ] TEA (xxTEA)
+- [x] Vigenère Cipher
+- [x] XOR
+- [ ] PBKDF2
+- [x] ROT5, ROT13, ROT18, ROT47
+  
+En-/Decryption (Custom):
+- [x] Div2
+- [x] nnnik21
+- [x] VxE (VxE-89, VxE-251)
+  
+En-/Decoding
 - [x] ASCII85
 - [x] ASCII / Binary
 - [x] Base64
 - [x] Bin / Hex
-- [ ] Blowfish
-- [x] Caesar Cipher
-- [x] CRC32
 - [x] Dec (2 to 36)
-- [x] Div2
-- [x] HMAC (Checksums)
-- [ ] Laszlo Hash (L64, L128)
-- [x] MD2, MD4, MD5
-- [x] nnnik21
-- [ ] PBKDF2
-- [ ] RC2
-- [x] RC4
-- [x] ROT5, ROT13, ROT18, ROT47
-- [x] Secure Salted (Checksums)
-- [x] SHA-1
-- [x] SHA-2 (SHA-256, SHA-384, SHA-512)
-- [ ] TEA (xxTEA)
-- [ ] Tiger
 - [x] URI/URL encode/decode
-- [x] Vigenère Cipher
-- [x] VxE (VxE-89, VxE-251)
-- [ ] Whirlpool
-- [x] XOR
-
+  
 ###A special thanks to  
 Bentschi, @AHK-just-me, @IsNull, @jNizM, @G33kDude, @joedf, @nnnik and others
