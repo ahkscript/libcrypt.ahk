@@ -38,7 +38,7 @@ LC_BinStr_EncodeText(Text, Pretty=False, Encoding="UTF-8") {
 
 LC_BinStr_DecodeText(Text, Encoding="UTF-8") {
 	Len := LC_BinStr_Decode(Bin, Text)
-	return StrGet(&Bin, Encoding)
+	return StrGet(&Bin, Len, Encoding)
 }
 
 LC_BinStr_Encode(ByRef Out, ByRef In, InLen, Pretty=False) {
