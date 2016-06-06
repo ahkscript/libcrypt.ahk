@@ -16,6 +16,7 @@ Hashing:
   
 Hashing (Custom):
 - [ ] Laszlo Hash (L64, L128)
+- [x] RSHash (Robert Sedgewick's string hashing algorithm)
   
 En-/Decryption:
 - [ ] 3DES
