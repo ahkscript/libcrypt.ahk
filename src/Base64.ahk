@@ -8,7 +8,7 @@ LC_Base64_EncodeText(Text,Encoding="UTF-8")
 LC_Base64_DecodeText(Text,Encoding="UTF-8")
 {
 	Len := LC_Base64_Decode(Bin, Text)
-	return StrGet(&Bin, Encoding)
+	return StrGet(&Bin, Len, Encoding)
 }
 
 LC_Base64_Encode(ByRef Out, ByRef In, InLen)
