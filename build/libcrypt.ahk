@@ -1,4 +1,4 @@
-LC_Version := "0.0.20.24"
+LC_Version := "0.0.21.00"
 
 LC_ASCII2Bin(s,pretty:=0) {
 	r:=""
@@ -40,7 +40,7 @@ LC_BinStr_EncodeText(Text, Pretty=False, Encoding="UTF-8") {
 
 LC_BinStr_DecodeText(Text, Encoding="UTF-8") {
 	Len := LC_BinStr_Decode(Bin, Text)
-	return StrGet(&Bin, Encoding)
+	return StrGet(&Bin, Len, Encoding)
 }
 
 LC_BinStr_Encode(ByRef Out, ByRef In, InLen, Pretty=False) {
@@ -68,6 +68,7 @@ LC_BinStr_Decode(ByRef Out, ByRef In) {
 	}
 }
 
+
 LC_Base64_EncodeText(Text,Encoding="UTF-8")
 {
 	VarSetCapacity(Bin, StrPut(Text, Encoding))
@@ -78,7 +79,7 @@ LC_Base64_EncodeText(Text,Encoding="UTF-8")
 LC_Base64_DecodeText(Text,Encoding="UTF-8")
 {
 	Len := LC_Base64_Decode(Bin, Text)
-	return StrGet(&Bin, Encoding)
+	return StrGet(&Bin, Len, Encoding)
 }
 
 LC_Base64_Encode(ByRef Out, ByRef In, InLen)
