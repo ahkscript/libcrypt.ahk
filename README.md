@@ -28,7 +28,7 @@ En-/Decryption:
 - [ ] TEA (xxTEA)
 - [x] Vigenère Cipher
 - [x] XOR
-- [ ] PBKDF2
+- [ ] PBKDF2 [not yet included working implementation here](https://autohotkey.com/boards/viewtopic.php?t=3477)
 - [x] ROT5, ROT13, ROT18, ROT47
   
 En-/Decryption (Custom):
