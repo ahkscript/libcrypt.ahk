@@ -5,7 +5,7 @@ if !ErrorLevel
 {
 	PngFile := FileOpen(FilePath, "r")
 	PngFile.RawRead(PngData, PngFile.Length)
-	Base64_Encode(Base64, PngData, PngFile.Length)
+	LC_Base64_Encode(Base64, PngData, PngFile.Length)
 	Clipboard := "data:image/png;base64," Base64
 	MsgBox, Paste into your browsers address bar
 }
@@ -16,7 +16,7 @@ Loop, 50
 	Unicode .= Chr(Char)
 }
 
-Base64 := Base64_EncodeText(Unicode)
-MsgBox, % Unicode "`n`n-> Base64_EncodeText ->`n`n"
-. Base64 "`n`n-> Base64_DecodeText ->`n`n"
-. Base64_DecodeText(Base64)
+Base64 := LC_Base64_EncodeText(Unicode)
+MsgBox, % Unicode "`n`n-> LC_Base64_EncodeText ->`n`n"
+. Base64 "`n`n-> LC_Base64_DecodeText ->`n`n"
+. LC_Base64_DecodeText(Base64)
