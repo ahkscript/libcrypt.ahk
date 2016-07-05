@@ -26,7 +26,7 @@ En-/Decryption:
 - [ ] RC2
 - [x] RC4
 - [ ] TEA (xxTEA)
-- [x] Vigenère Cipher
+- [x] VigenÃ¨re Cipher
 - [x] XOR
 - [ ] PBKDF2 [not yet included working implementation here](https://autohotkey.com/boards/viewtopic.php?t=3477)
 - [x] ROT5, ROT13, ROT18, ROT47
@@ -36,8 +36,8 @@ En-/Decryption (Custom):
 - [x] nnnik21
 - [x] VxE (VxE-89, VxE-251)
   
-En-/Decoding
-- [x] ASCII85
+En-/Decoding:
+- [ ] ASCII85
 - [x] ASCII / Binary
 - [x] Base64
 - [x] Bin / Hex
