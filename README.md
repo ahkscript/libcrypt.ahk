@@ -36,7 +36,7 @@ En-/Decryption (Custom):
 - [x] nnnik21
 - [x] VxE (VxE-89, VxE-251)
   
-En-/Decoding
+En-/Decoding:
 - [ ] ASCII85
 - [x] ASCII / Binary
 - [x] Base64
