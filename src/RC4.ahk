@@ -1,6 +1,5 @@
 ﻿LC_RC4_Encrypt(Data,Pass) {
-	Format:=A_FormatInteger,b:=0,j:=0,Key:=Object(),sBox:=Object()
-	SetFormat,Integer,Hex
+	b:=0,j:=0,Key:=Object(),sBox:=Object()
 	VarSetCapacity(Result,StrLen(Data)*2)
 	Loop 256
 		a:=(A_Index-1),Key[a]:=Asc(SubStr(Pass,Mod(a,StrLen(Pass))+1,1)),sBox[a]:=a
@@ -8,9 +7,7 @@
 		a:=(A_Index-1),b:=(b+sBox[a]+Key[a])&255,sBox[a]:=(sBox[b]+0,sBox[b]:=sBox[a]) ; SWAP(a,b)
 	Loop Parse, Data
 		i:=(A_Index&255),j:=(sBox[i]+j)&255,k:=(sBox[i]+sBox[j])&255,sBox[i]:=(sBox[j]+0,sBox[j]:=sBox[i]) ; SWAP(i,j)
-		,Result.=SubStr(Asc(A_LoopField)^sBox[k],-1,2)
-	StringReplace,Result,Result,x,0,All
-	SetFormat,Integer,%Format%
+		,Result.=format("{:02x}", Asc(A_LoopField)^sBox[k])
 	Return Result
 }
 
