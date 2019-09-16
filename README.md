@@ -3,13 +3,14 @@ libcrypt.ahk
 
 A collection of crypting and encoding functions from the community
 
-###Functions (WIP)  
+### Functions (WIP)  
 Hashing:
 - [x] CRC32
 - [x] MD2, MD4, MD5
 - [x] SHA-1
 - [x] SHA-2 (SHA-256, SHA-384, SHA-512)
 - [x] HMAC (Checksums)
+- [ ] PBKDF2 [not yet included working implementation here](https://autohotkey.com/boards/viewtopic.php?t=3477)
 - [x] Secure Salted (Checksums)
 - [ ] Tiger
 - [ ] Whirlpool
@@ -28,7 +29,6 @@ En-/Decryption:
 - [ ] TEA (xxTEA)
 - [x] Vigenère Cipher
 - [x] XOR
-- [ ] PBKDF2 [not yet included working implementation here](https://autohotkey.com/boards/viewtopic.php?t=3477)
 - [x] ROT5, ROT13, ROT18, ROT47
   
 En-/Decryption (Custom):
@@ -44,5 +44,5 @@ En-/Decoding:
 - [x] Dec (2 to 36)
 - [x] URI/URL encode/decode
   
-###A special thanks to  
+### A special thanks to  
 Bentschi, @AHK-just-me, @IsNull, @jNizM, @G33kDude, @joedf, @nnnik and others
