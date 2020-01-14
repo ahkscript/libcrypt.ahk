@@ -1,4 +1,4 @@
-LC_Version := "0.0.21.01"
+LC_Version := "0.0.21.02"
 
 LC_ASCII2Bin(s,pretty:=0) {
 	r:=""
@@ -722,6 +722,9 @@ LC_AddrSHA512(addr, length) {
 	return LC_CalcAddrHash(addr, length, 0x800e)
 }
 
+; analogous to encodeURIComponent() / decodeURIComponent() in javascript
+; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent
+
 ; Modified by GeekDude from http://goo.gl/0a0iJq
 LC_UriEncode(Uri, RE="[0-9A-Za-z]") {
 	VarSetCapacity(Var, StrPut(Uri, "UTF-8"), 0), StrPut(Uri, &Var, "UTF-8")
@@ -746,8 +749,13 @@ LC_UriDecode(Uri) {
 
 ;----------------------------------
 
-LC_UrlEncode(Url) { ; keep ":/;?@,&=+$#."
-	return LC_UriEncode(Url, "[0-9a-zA-Z:/;?@,&=+$#.]")
+; analogous to encodeURI() / decodeURI() in javascript
+; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI
+
+LC_UrlEncode(Url) {
+	; keep certain symbols like ":/;?@,&=+$#.", as per the standard js implementation
+	; see https://github.com/ahkscript/libcrypt.ahk/issues/30
+	return LC_UriEncode(Url, "[!#$&-;=?-Z_a-z~]")
 }
 
 LC_UrlDecode(url) {
