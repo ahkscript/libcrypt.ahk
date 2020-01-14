@@ -1,4 +1,5 @@
 ﻿#Include ..\build\libcrypt.ahk
+#Include ..\src-dev\TEA.ahk
 
 Message 	:= "Secret Message!"
 ;Keys		:= [0x13844741,0x18923748,0x83248432,0x54323454]
