@@ -1,7 +1,7 @@
 ﻿LC_SecureSalted(salt, message, algo := "md5") {
 	hash := ""
-	saltedHash := %algo%(message . salt) 
-	saltedHashR := %algo%(salt . message)
+	saltedHash := LC_%algo%(message . salt) 
+	saltedHashR := LC_%algo%(salt . message)
 	len := StrLen(saltedHash)
 	loop % len / 2
 	{
