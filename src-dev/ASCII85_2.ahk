@@ -27,19 +27,20 @@ LC_ASCII85_Encode(content, variant="") {
 	; Encode each tuple of 4 bytes
 	string := ""
 	i := 1
-	loop_max := ceil(n / 4)
-	Loop, % loop_max
+	while (i < n)
 	{
 		; Read 32-bit unsigned integer from bytes following the
 		; big-endian convention (most significant byte first)
-		if (i >= loop_max) ; handles the js-hack for falsy||0 test
+		if (i >= n-1) ; handles the js-hack for falsy||0 test
 			bytes.Push(0,0,0)
 		tuple := ( ((bytes[i]) << 24)
-			+ ((bytes[i + 1] |0) << 16)
-			+ ((bytes[i + 2] |0) << 8)
-			+ ((bytes[i + 3] |0)) )
-			>> 0
-
+			+ ((bytes[i + 1]) << 16)
+			+ ((bytes[i + 2]) << 8)
+			+ ((bytes[i + 3])) ) >> 0
+	
+		;if i > 268
+		;	MsgBox
+		
 		if ( (variant["zeroTupleChar"] == "null") || (tuple > 0) )
 		{
 			; Calculate 5 digits by repeatedly dividing
@@ -59,16 +60,10 @@ LC_ASCII85_Encode(content, variant="") {
 				newarr.InsertAt(1, t_val)
 			digits := newarr
 
-			if (n < (i + 4)) {
+			if (n < (i-1 + 4)) {
 				; Omit final characters added due to bytes of padding
 				; >>>> digits.splice(n - (i + 4), 4)
-				t_start := n - (i + 4)
-				t_delCount := 4
-				newarr := []
-				Loop % digits.Length()
-					if ( (A_Index <= t_start) || (A_Index > t_start + t_delCount) )
-						newarr.push( digits[A_Index] )
-				digits := newarr
+				digits := _splice(digits,n - (i-1 + 4), 4)
 			}
 
 			; Convert digits to characters and glue them together
@@ -99,6 +94,36 @@ LC_ASCII85_Encode(content, variant="") {
 
 	return string
 }
+
+
+
+
+_splice(arr, start, deleteCount) {
+    len := arr.Length()
+    newarr := []
+
+    startIndex := start
+    if (start > len) {
+        startIndex := len
+    } else if (start < 0) {
+        startIndex := len + start
+    }
+
+    if (len + start < 0)
+        startIndex := 0
+    
+	Loop % startIndex
+        newarr.push( arr[A_Index] )
+
+	j := 1 + startIndex+deleteCount
+    while (j <= len) {
+        newarr.push( arr[j] )
+		j++
+    }
+
+    return newarr
+}
+
 
 LC_ASCII85_Decode(str) {
 	return "[WIP]"
