@@ -1,7 +1,16 @@
 ; implemented in ahk by joedf
 ; based on https://github.com/cryptii/cryptii/blob/4a0a58318d093c4c6e3333b3f296ad7c96309629/src/Encoder/Ascii85.js
 
+/**
+ * Performs encode on given content.
+ * @param {String} content
+ * @return {String} Encoded content
+ */
 LC_ASCII85_Encode(content, variant="") {
+	; Check for <~ ~> wrappers often used to wrap ascii85 encoded data
+	; Decode wrapped data only
+	content:=StrReplace(content,"<~")
+	content:=StrReplace(content,"~>")
 	
 	; get bytes
 	bytes := StrSplit(content)
@@ -27,19 +36,24 @@ LC_ASCII85_Encode(content, variant="") {
 	; Encode each tuple of 4 bytes
 	string := ""
 	i := 1
-	while (i < n)
+	while (i <= n)
 	{
 		; Read 32-bit unsigned integer from bytes following the
 		; big-endian convention (most significant byte first)
-		if (i >= n-1) ; handles the js-hack for falsy||0 test
+		/*
+		tuple = (
+			((bytes[i]) << 24) +
+			((bytes[i + 1] || 0) << 16) +
+			((bytes[i + 2] || 0) << 8) +
+			((bytes[i + 3] || 0))
+		) >>> 0
+		*/
+		if (i-1 + 4 > n) ; handles the js-hack for falsy||0 test
 			bytes.Push(0,0,0)
 		tuple := ( ((bytes[i]) << 24)
 			+ ((bytes[i + 1]) << 16)
 			+ ((bytes[i + 2]) << 8)
 			+ ((bytes[i + 3])) ) >> 0
-	
-		;if i > 268
-		;	MsgBox
 		
 		if ( (variant["zeroTupleChar"] == "null") || (tuple > 0) )
 		{
@@ -130,22 +144,6 @@ LC_ASCII85_Decode(str) {
 }
 
 /*
-   * Triggered before performing decode on given content.
-   * @protected
-   * @param {Chain} content
-   * @return {number[]|string|Uint8Array|Chain|Promise} Filtered content
-
-  willDecode (content) {
-    // Check for <~ ~> wrappers often used to wrap ascii85 encoded data
-    const wrapperMatches = content.getString().match(/<~(.+?)~>/)
-    if (wrapperMatches !== null) {
-      // Decode wrapped data only
-      return wrapperMatches[1]
-    }
-    return content
-  }
-
-
    * Performs decode on given content.
    * @protected
    * @param {Chain} content
