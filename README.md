@@ -37,7 +37,7 @@ En-/Decryption (Custom):
 - [x] VxE (VxE-89, VxE-251)
   
 En-/Decoding:
-- [ ] ASCII85
+- [x] ASCII85
 - [x] ASCII / Binary
 - [x] Base64
 - [x] Bin / Hex

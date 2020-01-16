@@ -1,5 +1,4 @@
 ﻿#Include ..\build\libcrypt.ahk
-#Include ..\src-dev\ASCII85_2.ahk
 
 #NoEnv
 #SingleInstance Force
