@@ -88,55 +88,6 @@ LC_ASCII85_Encode(content, variant="") {
 	return string
 }
 
-; Helper function (not to create global vars), to return the variant associated information
-__LC_ASCII85_getVariant(variant="") {
-	if InStr(variant, "z")
-		return { "name": "Z85"
-				,"label": "Z85 (ZeroMQ)"
-				,"alphabet": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#"
-				,"zeroTupleChar": "null"}
-	return { "name": "original"
-			,"label": "Original"
-			,"alphabet": "null"
-			,"zeroTupleChar": "z"}
-}
-
-; AHK minimum (no add-item feature) Polyfill for javascript's Array.prototype.splice()
-; uses 0-based index, not ahk's default count starting at 1 instead of 0.
-__LC_ASCII85_splice(arr, start, deleteCount="") {
-	len := arr.Length()
-	newarr := []
-
-	startIndex := start
-	if (start > len) {
-		startIndex := len
-	} else if (start < 0) {
-		startIndex := len + start
-	}
-
-	if (len + start < 0)
-		startIndex := 0
-	
-	Loop % startIndex
-		newarr.push( arr[A_Index] )
-
-	; check if deleteCount is specified
-	if (StrLen(deleteCount)) {
-		
-		; dont omit anything if deleteCount <= 0
-		if (deleteCount<0)
-			deleteCount:=0
-		
-		j := 1 + startIndex+deleteCount
-		while (j <= len) {
-			newarr.push( arr[j] )
-			j++
-		}
-	}
-
-	return newarr
-}
-
 /*
  * Performs decode on given content.
  * @param {String} content
@@ -210,4 +161,53 @@ LC_ASCII85_Decode(content, variant="") {
 		decoded .= Chr(v)
 	
 	return decoded
+}
+
+; Helper function (not to create global vars), to return the variant associated information
+__LC_ASCII85_getVariant(variant="") {
+	if InStr(variant, "z")
+		return { "name": "Z85"
+				,"label": "Z85 (ZeroMQ)"
+				,"alphabet": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#"
+				,"zeroTupleChar": "null"}
+	return { "name": "original"
+			,"label": "Original"
+			,"alphabet": "null"
+			,"zeroTupleChar": "z"}
+}
+
+; AHK minimum (no add-item feature) Polyfill for javascript's Array.prototype.splice()
+; uses 0-based index, not ahk's default count starting at 1 instead of 0.
+__LC_ASCII85_splice(arr, start, deleteCount="") {
+	len := arr.Length()
+	newarr := []
+
+	startIndex := start
+	if (start > len) {
+		startIndex := len
+	} else if (start < 0) {
+		startIndex := len + start
+	}
+
+	if (len + start < 0)
+		startIndex := 0
+	
+	Loop % startIndex
+		newarr.push( arr[A_Index] )
+
+	; check if deleteCount is specified
+	if (StrLen(deleteCount)) {
+		
+		; dont omit anything if deleteCount <= 0
+		if (deleteCount<0)
+			deleteCount:=0
+		
+		j := 1 + startIndex+deleteCount
+		while (j <= len) {
+			newarr.push( arr[j] )
+			j++
+		}
+	}
+
+	return newarr
 }
