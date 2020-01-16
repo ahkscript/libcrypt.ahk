@@ -4,6 +4,7 @@
 /**
  * Performs encode on given content.
  * @param {String} content
+ * @param {String} variant 
  * @return {String} Encoded content
  */
 LC_ASCII85_Encode(content, variant="") {
@@ -18,17 +19,7 @@ LC_ASCII85_Encode(content, variant="") {
 		bytes[A_Index] := Asc( bytes[A_Index] )
 
 	; get variant
-	if InStr(variant, "z") {
-		variant := { "name": "Z85"
-					,"label": "Z85 (ZeroMQ)"
-					,"alphabet": StrSplit("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#")
-					,"zeroTupleChar": "null"}
-	} else {
-		variant := { "name": "original"
-				,"label": "Original"
-				,"alphabet": "null"
-				,"zeroTupleChar": "z"}
-	}
+	variant := __LC_ASCII85_getVariant(variant)
 
 	; get number of bytes
 	n := bytes.Length()
@@ -77,7 +68,7 @@ LC_ASCII85_Encode(content, variant="") {
 			if (n < (i-1 + 4)) {
 				; Omit final characters added due to bytes of padding
 				; >>>> digits.splice(n - (i + 4), 4)
-				digits := _splice(digits,n - (i-1 + 4), 4)
+				digits := __LC_ASCII85_splice(digits,n - (i-1 + 4), 4)
 			}
 
 			; Convert digits to characters and glue them together
@@ -110,9 +101,20 @@ LC_ASCII85_Encode(content, variant="") {
 }
 
 
+__LC_ASCII85_getVariant(variant="") {
+	if InStr(variant, "z")
+		return { "name": "Z85"
+				,"label": "Z85 (ZeroMQ)"
+				,"alphabet": StrSplit("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#")
+				,"zeroTupleChar": "null"}
+	return { "name": "original"
+			,"label": "Original"
+			,"alphabet": "null"
+			,"zeroTupleChar": "z"}
+}
 
-
-_splice(arr, start, deleteCount) {
+; AHK minimum (no add-item feature) Polyfill for javascript's Array.prototype.splice()
+__LC_ASCII85_splice(arr, start, deleteCount="") {
     len := arr.Length()
     newarr := []
 
@@ -129,33 +131,41 @@ _splice(arr, start, deleteCount) {
 	Loop % startIndex
         newarr.push( arr[A_Index] )
 
-	j := 1 + startIndex+deleteCount
-    while (j <= len) {
-        newarr.push( arr[j] )
-		j++
+	; check if deleteCount is specified
+	if (StrLen(deleteCount)) {
+		
+		; dont omit anything if deleteCount <= 0
+		if (deleteCount<0)
+			deleteCount:=0
+		
+		j := 1 + startIndex+deleteCount
+		while (j <= len) {
+			newarr.push( arr[j] )
+			j++
+		}
     }
 
     return newarr
 }
 
 
-LC_ASCII85_Decode(str) {
-	return "[WIP]"
-}
-
 /*
-   * Performs decode on given content.
-   * @protected
-   * @param {Chain} content
-   * @return {number[]|string|Uint8Array|Chain|Promise} Decoded content
+ * Performs decode on given content.
+ * @protected
+ * @param {Chain} content
+ * @return {number[]|string|Uint8Array|Chain|Promise} Decoded content
+ 
+LC_ASCII85_Decode(content, variant="") {
+	; Remove whitespaces, and split into an array
+    string := StrSplit(Trim(content))
+    
+	; Get variant
+	variant := __LC_ASCII85_getVariant(variant)
+    
+	; get length
+	n := string.Length()
 
-  performDecode (content) {
-    const string = StringUtil.removeWhitespaces(content.getString())
-    const variant = variantSpecs.find(variant =>
-      variant.name === this.getSettingValue('variant'))
-    const n = string.length
-
-    // Decode each tuple of 5 characters
+	; Decode each tuple of 5 characters
     const bytes = []
     let i = 0
     let digits, tuple, tupleBytes
@@ -209,7 +219,5 @@ LC_ASCII85_Decode(str) {
       }
     }
 
-    return new Uint8Array(bytes)
-  }
+    return bytes
 }
-*/

@@ -20,7 +20,7 @@ Man is distinguished, not only by his reason, but by this singular passion from 
 )
 
 example := "ASCII85: -----`n" . (e:=LC_ASCII85_Encode(In))
-	. "`n`nInverse: -----`n" . LC_ASCII85_Decode(e)
+	. "`n`nInverse: -----`n" ;. LC_ASCII85_Decode(e)
 ;MsgBox, 64, ASCII85, %example%
 FileAppend, %example%`n, *
 ExitApp
