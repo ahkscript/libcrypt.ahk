@@ -9,14 +9,14 @@ LC_UriEncode(Uri, RE="[0-9A-Za-z]") {
 	Return, Res
 }
 
-LC_UriDecode(Uri) {
+LC_UriDecode(Uri, Encoding:="UTF-8") {
 	Pos := 1
 	While Pos := RegExMatch(Uri, "i)(%[\da-f]{2})+", Code, Pos)
 	{
 		VarSetCapacity(Var, StrLen(Code) // 3, 0), Code := SubStr(Code,2)
 		Loop, Parse, Code, `%
 			NumPut("0x" A_LoopField, Var, A_Index-1, "UChar")
-		Decoded := StrGet(&Var, "UTF-8")
+		Decoded := StrGet(&Var, Encoding)
 		Uri := SubStr(Uri, 1, Pos-1) . Decoded . SubStr(Uri, Pos+StrLen(Code)+1)
 		Pos += StrLen(Decoded)+1
 	}
