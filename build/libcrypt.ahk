@@ -836,8 +836,7 @@ LC_nnnik21__decryptbin(pBin1,sBin1,pBin2,sBin2){
 
 
 LC_RC4_Encrypt(Data,Pass) {
-	Format:=A_FormatInteger,b:=0,j:=0,Key:=Object(),sBox:=Object()
-	SetFormat,Integer,Hex
+	b:=0,j:=0,Key:=Object(),sBox:=Object()
 	VarSetCapacity(Result,StrLen(Data)*2)
 	Loop 256
 		a:=(A_Index-1),Key[a]:=Asc(SubStr(Pass,Mod(a,StrLen(Pass))+1,1)),sBox[a]:=a
@@ -845,9 +844,7 @@ LC_RC4_Encrypt(Data,Pass) {
 		a:=(A_Index-1),b:=(b+sBox[a]+Key[a])&255,sBox[a]:=(sBox[b]+0,sBox[b]:=sBox[a]) ; SWAP(a,b)
 	Loop Parse, Data
 		i:=(A_Index&255),j:=(sBox[i]+j)&255,k:=(sBox[i]+sBox[j])&255,sBox[i]:=(sBox[j]+0,sBox[j]:=sBox[i]) ; SWAP(i,j)
-		,Result.=SubStr(Asc(A_LoopField)^sBox[k],-1,2)
-	StringReplace,Result,Result,x,0,All
-	SetFormat,Integer,%Format%
+		,Result.=format("{:02x}", Asc(A_LoopField)^sBox[k])
 	Return Result
 }
 
@@ -879,6 +876,7 @@ LC_RC4(RC4Data,RC4Pass) { ; Thanks Rajat for original, Updated Libcrypt version
 	SetBatchlines, %BLines%
 	Return RC4Result
 }
+
 
 /*
 	- ROT5 covers the numbers 0-9.
@@ -1016,14 +1014,14 @@ LC_UriEncode(Uri, RE="[0-9A-Za-z]") {
 	Return, Res
 }
 
-LC_UriDecode(Uri) {
+LC_UriDecode(Uri, Encoding:="UTF-8") {
 	Pos := 1
 	While Pos := RegExMatch(Uri, "i)(%[\da-f]{2})+", Code, Pos)
 	{
 		VarSetCapacity(Var, StrLen(Code) // 3, 0), Code := SubStr(Code,2)
 		Loop, Parse, Code, `%
 			NumPut("0x" A_LoopField, Var, A_Index-1, "UChar")
-		Decoded := StrGet(&Var, "UTF-8")
+		Decoded := StrGet(&Var, Encoding)
 		Uri := SubStr(Uri, 1, Pos-1) . Decoded . SubStr(Uri, Pos+StrLen(Code)+1)
 		Pos += StrLen(Decoded)+1
 	}
