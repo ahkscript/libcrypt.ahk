@@ -4,8 +4,8 @@ iterationCnt:=a_tickCount
 junk:=0
 str:="Hello° µWorld"
 
-encStr:=soupRot.enc(str,iterationCnt,junk)
-decStr:=soupRot.dec(encStr,iterationCnt,junk)
+encStr:=LC_soupRot.enc(str,iterationCnt,junk)
+decStr:=LC_soupRot.dec(encStr,iterationCnt,junk)
 
-msgbox,,SoupRot,% "Original String: " str "`n`nEncrypted String: " encStr "`n`nDecrypted String: " decStr
+msgbox,,LC_soupRot,% "Original String: " str "`n`nEncrypted String: " encStr "`n`nDecrypted String: " decStr
 exitApp

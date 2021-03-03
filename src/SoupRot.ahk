@@ -1,4 +1,4 @@
-﻿/* Written by Masonjar13
+/* Written by Masonjar13
 
 	A static-class for a length-based rotational cipher.
 	

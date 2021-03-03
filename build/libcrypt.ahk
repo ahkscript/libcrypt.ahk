@@ -1,4 +1,4 @@
-LC_Version := "0.0.24.03"
+LC_Version := "0.0.24.04"
 
 LC_ASCII2Bin(s,pretty:=0) {
 	r:=""
@@ -1013,45 +1013,40 @@ LC_AddrSHA512(addr, length) {
 
 	Methods & Parameters:
 ---------------
-	soupRot.enc()	- encode string
-		str			- string to encode
+	LC_soupRot.enc()	- encode string
+		str		- string to encode
 		mult 		- rotation iteration count
 		junk		- random character count to be added (default: 0)
 	
-	soupRot.dec()	- decode string
-		str			- string to decode
+	LC_soupRot.dec()	- decode string
+		str		- string to decode
 		mult		- rotation iteration count used to encode
 		junk		- random character count used to encode (default: 0)
 	
 	dependencies (can be found at https://github.com/Masonjar13/AHK-Library)
-		randStr()
-		rand()
-		ifContains()
-		isDigit()
-		b64e()		- encode string
-		b64d()		- decode string (utf-8)
-		strPutVar()	- for b64e()
+		_randStr()
+		_rand()
+		_ifContains()
+		_isDigit()
 ---------------
 
 	Example:
 ------------
 iterationCnt:=a_tickCount
 junk:=0
-str:="Hello° µWorld"
+str:="HelloÂ° ÂµWorld"
 
-encStr:=soupRot.enc(str,iterationCnt,junk)
-decStr:=soupRot.dec(encStr,iterationCnt,junk)
+encStr:=LC_soupRot.enc(str,iterationCnt,junk)
+decStr:=LC_soupRot.dec(encStr,iterationCnt,junk)
 
-msgbox,,SoupRot,% encStr "`n`n" decStr
+msgbox,,SoupRot,% "Original String: " str "`n`nEncrypted String: " encStr "`n`nDecrypted String: " decStr
 ------------
 
 */
 
-class soupRot {
+class LC_soupRot {
 	enc(str,mult,junk:=0){
-		this.b64e(bStr,str)
-
-		str:=bStr
+		str:=LC_Base64_EncodeText(str)
 		rotBase:=strLen(str) * mult
 		
 		for i,a in strSplit(str) {
@@ -1100,68 +1095,49 @@ class soupRot {
 				skip:=junk
 			}
 		}
-		this.b64d(bStr,nStr)
-		return rTrim(bStr,chr(65533)) ;"?"
+		return rTrim(LC_Base64_DecodeText(nStr),chr(65533)) ;"ï¿½"
 	}
 	
 	; Dependencies
 	
-	randStr(lowerBound,upperBound,mode:=1){
-		if (!this.isDigit(lowerBound)||!this.isDigit(upperBound)||!this.isDigit(mode))
+	_randStr(lowerBound,upperBound,mode:=1){
+		if (!this._isDigit(lowerBound)||!this._isDigit(upperBound)||!this._isDigit(mode))
 			return -1
-		loop % this.rand(lowerBound,upperBound) {
+		loop % this._rand(lowerBound,upperBound) {
 			t:=""
 			if (strLen(mode)=1) {
 				t:=mode
 			} else {
-				while (!this.ifContains(mode,t))
-					t:=this.rand(1,4)
+				while (!this._ifContains(mode,t))
+					t:=this._rand(1,4)
 			}
 			if (t=1) {
-				str.=chr(this.rand(97,122))
+				str.=chr(this._rand(97,122))
 			} else if (t=2) {
-				str.=chr(this.rand(65,90))
+				str.=chr(this._rand(65,90))
 			} else if (t=3) {
-				str.=this.rand(0,9)
+				str.=this._rand(0,9)
 			} else if (t=4) {
-				i:=this.rand(1,4)
-				str.=i=1?chr(this.rand(33,47)):i=2?chr(this.rand(58,64)):i=3?chr(this.rand(91,96)):chr(this.rand(123,126))
+				i:=this._rand(1,4)
+				str.=i=1?chr(this._rand(33,47)):i=2?chr(this._rand(58,64)):i=3?chr(this._rand(91,96)):chr(this._rand(123,126))
 			}
 		}
 		return str
 	}
-	rand(lowerBound,upperBound){
+	_rand(lowerBound,upperBound){
 		random,rand,% lowerBound,% upperBound
 		return rand
 	}
-	ifContains(haystack,needle){
+	_ifContains(haystack,needle){
 		if haystack contains %needle%
 			return 1
 	}
-	isDigit(in){
+	_isDigit(in){
 		if in is digit
 			return 1
 	}
-	b64e(byRef outData,byRef inData ){
-		inDataLen:=this.strPutVar(inData,inData,"UTF-8") - 1
-		dllCall("Crypt32.dll\CryptBinaryToString","UInt",&inData,"UInt",inDataLen,"UInt",1,"UInt",0,"UIntP",tChars,"CDECL Int")
-		varSetCapacity(outData,req:=tChars * (a_isUnicode?2:1),0)
-		dllCall("Crypt32.dll\CryptBinaryToString","UInt",&inData,"UInt",inDataLen,"UInt",1,"Str",outData,"UIntP",req,"CDECL Int")
-		return tChars
-	}
-	b64d(byRef outData,byRef inData){
-		dllCall("Crypt32.dll\CryptStringToBinary","UInt",&inData,"UInt",strLen(inData),"UInt",1,"UInt",0,"UIntP",bytes,"Int",0,"Int",0,"CDECL Int")
-		varSetCapacity(outData,req:=bytes * (a_isUnicode?2:1),0)
-		dllCall("Crypt32.dll\CryptStringToBinary","UInt",&inData,"UInt",strLen(inData),"UInt",1,"Str",outData,"UIntP",req,"Int",0,"Int",0,"CDECL Int")
-		outData:=strGet(&outData,"utf-8")
-		return bytes
-	}
-	strPutVar(string,byRef var,encoding){
-		varSetCapacity(var,strPut(string,encoding)
-			* ((encoding="utf-16"||encoding="cp1200")?2:1))
-		return strPut(string,&var,encoding)
-	}
 }
+
 
 ; analogous to encodeURIComponent() / decodeURIComponent() in javascript
 ; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent
