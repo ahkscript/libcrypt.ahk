@@ -35,6 +35,7 @@ En-/Decryption (Custom):
 - [x] Div2
 - [x] nnnik21
 - [x] VxE (VxE-89, VxE-251)
+- [x] SoupRot
   
 En-/Decoding:
 - [x] ASCII85
